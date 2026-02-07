@@ -1,0 +1,123 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: mrms-db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mrms
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d mrms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mrms-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: mrms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mrms-network
+
+  # MinIO Object Storage (optional - can be disabled if network issues)
+  # minio:
+  #   image: minio/minio:7-latest
+  #   container_name: mrms-minio
+  #   environment:
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   volumes:
+  #     - minio_data:/minio_data
+  #   command: minio server /minio_data --console-address ":9001"
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+  #     interval: 30s
+  #     timeout: 20s
+  #     retries: 3
+  #   networks:
+  #     - mrms-network
+
+  # Backend API
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mrms-api
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: password
+      DB_NAME: mrms
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: dev-secret-key-change-in-production
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/tests:/app/tests
+      - ./backend/dist:/app/dist
+      - /app/node_modules
+    command: npm start
+    networks:
+      - mrms-network
+
+  # Frontend Web Dashboard (temporarily disabled - scaffolded React app)
+  # Uncomment when frontend is fully implemented
+  # web:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: mrms-web
+  #   environment:
+  #     REACT_APP_API_URL: http://localhost:3000
+  #     REACT_APP_ENV: development
+  #   ports:
+  #     - "3001:3000"
+  #   depends_on:
+  #     - api
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #     - /app/node_modules
+  #   networks:
+  #     - mrms-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  mrms-network:
+    driver: bridge
