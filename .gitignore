@@ -71,4 +71,5 @@ Thumbs.db
 frontend/build/
 backend/dist/
 
-artifacts/
+artifacts/.env
+.mcp.json
