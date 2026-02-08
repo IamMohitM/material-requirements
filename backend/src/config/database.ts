@@ -50,3 +50,44 @@ export async function closeDatabase() {
     console.log('✓ Database connection closed');
   }
 }
+
+/**
+ * Wrapper to handle TypeORM connection errors with automatic retry
+ * Solves the "Driver not Connected" issue by reconnecting when needed
+ */
+export async function withDatabaseConnection<T>(
+  callback: () => Promise<T>,
+  retries: number = 3
+): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await callback();
+    } catch (error: any) {
+      const isConnectionError =
+        error?.message?.includes('Driver not Connected') ||
+        error?.message?.includes('client closed') ||
+        error?.message?.includes('Connection lost') ||
+        error?.code === 'ECONNREFUSED';
+
+      if (isConnectionError && attempt < retries) {
+        console.warn(`Database connection error on attempt ${attempt}, reconnecting...`);
+        try {
+          // Destroy and reinitialize the connection
+          if (AppDataSource.isInitialized) {
+            await AppDataSource.destroy();
+          }
+          await AppDataSource.initialize();
+          console.log('✓ Connection restored');
+          // Retry the operation
+          continue;
+        } catch (reInitError) {
+          console.error('Failed to restore connection:', reInitError);
+          throw error;
+        }
+      }
+      // If not a connection error or we're out of retries, throw the original error
+      throw error;
+    }
+  }
+  throw new Error('Failed after all retries');
+}

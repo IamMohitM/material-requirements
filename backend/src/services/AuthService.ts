@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { AppDataSource } from '@config/database';
+import { AppDataSource, withDatabaseConnection } from '@config/database';
 import { User } from '@entities/User';
 import {
   AuthenticationError,
@@ -78,51 +78,53 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<{ user: Partial<User>; accessToken: string; refreshToken: string }> {
-    // Find user
-    const user = await this.getUserRepository().findOne({
-      where: { email },
-    });
+    return withDatabaseConnection(async () => {
+      // Find user
+      const user = await this.getUserRepository().findOne({
+        where: { email },
+      });
 
-    if (!user) {
-      throw new AuthenticationError('Invalid email or password');
-    }
+      if (!user) {
+        throw new AuthenticationError('Invalid email or password');
+      }
 
-    if (!user.is_active) {
-      throw new AuthenticationError('User account is inactive');
-    }
+      if (!user.is_active) {
+        throw new AuthenticationError('User account is inactive');
+      }
 
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
-    if (!isPasswordValid) {
-      throw new AuthenticationError('Invalid email or password');
-    }
+      if (!isPasswordValid) {
+        throw new AuthenticationError('Invalid email or password');
+      }
 
-    // Update last login
-    user.last_login = new Date();
-    await this.getUserRepository().save(user);
+      // Update last login
+      user.last_login = new Date();
+      await this.getUserRepository().save(user);
 
-    // Generate tokens
-    const accessToken = generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    const refreshToken = generateToken(
-      {
+      // Generate tokens
+      const accessToken = generateToken({
         id: user.id,
         email: user.email,
         role: user.role,
-      },
-      '30d'
-    );
+      });
 
-    return {
-      user: this.sanitizeUser(user),
-      accessToken,
-      refreshToken,
-    };
+      const refreshToken = generateToken(
+        {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+        '30d'
+      );
+
+      return {
+        user: this.sanitizeUser(user),
+        accessToken,
+        refreshToken,
+      };
+    });
   }
 
   /**
