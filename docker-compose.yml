@@ -90,25 +90,22 @@ services:
     networks:
       - mrms-network
 
-  # Frontend Web Dashboard (temporarily disabled - scaffolded React app)
-  # Uncomment when frontend is fully implemented
-  # web:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: mrms-web
-  #   environment:
-  #     REACT_APP_API_URL: http://localhost:3000
-  #     REACT_APP_ENV: development
-  #   ports:
-  #     - "3001:3000"
-  #   depends_on:
-  #     - api
-  #   volumes:
-  #     - ./frontend/src:/app/src
-  #     - /app/node_modules
-  #   networks:
-  #     - mrms-network
+  # Frontend Web Dashboard
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mrms-web
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+      REACT_APP_ENV: development
+    ports:
+      - "3001:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - mrms-network
 
 volumes:
   postgres_data:
