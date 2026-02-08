@@ -73,3 +73,4 @@ backend/dist/
 
 artifacts/.env
 .mcp.json
+.envrc
