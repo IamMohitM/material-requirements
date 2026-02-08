@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
-import { authService } from '@services/auth';
-import { setUser, setTokens, setError } from '@store/slices/authSlice';
+import { authService } from '../services/auth';
+import { setUser, setTokens, setError } from '../store/slices/authSlice';
 import '../styles/LoginPage.css';
 
 function LoginPage() {

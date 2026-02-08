@@ -1,10 +1,11 @@
-import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useSelector } from 'react-redux';
-import { RootState } from '@store/store';
+import { useNavigate } from 'react-router-dom';
+import { RootState } from '../store/store';
 
 function Dashboard() {
   const { user } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
 
   return (
     <Container className="container-main">
@@ -61,14 +62,40 @@ function Dashboard() {
             <Card.Title className="mb-0">Quick Actions</Card.Title>
           </Card.Header>
           <Card.Body>
-            <Button variant="primary" className="me-2 mb-2">
+            <Button
+              variant="primary"
+              className="me-2 mb-2"
+              onClick={() => navigate('/requests')}
+            >
               Create Request
             </Button>
-            <Button variant="outline-primary" className="me-2 mb-2">
+            <Button
+              variant="outline-primary"
+              className="me-2 mb-2"
+              onClick={() => navigate('/requests')}
+            >
               View Requests
             </Button>
-            <Button variant="outline-primary" className="me-2 mb-2">
+            <Button
+              variant="outline-primary"
+              className="me-2 mb-2"
+              onClick={() => navigate('/vendors')}
+            >
               Manage Vendors
+            </Button>
+            <Button
+              variant="outline-success"
+              className="me-2 mb-2"
+              onClick={() => navigate('/deliveries')}
+            >
+              Track Deliveries
+            </Button>
+            <Button
+              variant="outline-success"
+              className="me-2 mb-2"
+              onClick={() => navigate('/invoices')}
+            >
+              Manage Invoices
             </Button>
           </Card.Body>
         </Card>

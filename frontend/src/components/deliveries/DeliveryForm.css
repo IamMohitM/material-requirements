@@ -1,0 +1,50 @@
+/* DeliveryForm Styles */
+.delivery-form-container {
+  padding: 1rem;
+}
+
+.delivery-line-items {
+  margin-top: 1.5rem;
+}
+
+.delivery-line-items table {
+  margin-bottom: 0;
+}
+
+.delivery-line-items th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  padding: 0.75rem;
+}
+
+.delivery-line-items td {
+  vertical-align: middle;
+  padding: 0.75rem;
+}
+
+.quality-score {
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.quality-score.warning {
+  color: #f59e0b;
+}
+
+.quality-score.critical {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .delivery-line-items {
+    overflow-x: auto;
+  }
+
+  .delivery-line-items table {
+    font-size: 0.875rem;
+  }
+
+  .delivery-line-items input {
+    padding: 0.375rem 0.5rem;
+  }
+}

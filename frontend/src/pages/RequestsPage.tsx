@@ -1,20 +1,58 @@
-import React from 'react';
-import { Container, Button } from 'react-bootstrap';
+import { useState } from 'react';
+import { Container } from 'react-bootstrap';
+import { RequestList, RequestForm, RequestDetail } from '../components/requests';
+import { Request } from '../store/slices/requestsSlice';
 
-function RequestsPage() {
+export const RequestsPage: React.FC = () => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const handleCreateClick = () => {
+    setShowCreateForm(true);
+  };
+
+  const handleFormClose = () => {
+    setShowCreateForm(false);
+  };
+
+  const handleFormSuccess = () => {
+    setShowCreateForm(false);
+  };
+
+  const handleRowClick = (request: Request) => {
+    setSelectedRequest(request);
+    setShowDetail(true);
+  };
+
+  const handleDetailClose = () => {
+    setShowDetail(false);
+    setSelectedRequest(null);
+  };
+
   return (
-    <Container className="container-main">
-      <div className="page-header">
-        <h1>Material Requests</h1>
-        <p>Manage material requests for your projects</p>
-      </div>
-      <Button variant="primary" className="mb-3">
-        Create New Request
-      </Button>
-      {/* TODO: Implement requests list */}
-      <p>Requests list coming soon...</p>
+    <Container fluid className="py-5">
+      {showDetail ? (
+        <RequestDetail
+          request={selectedRequest}
+          onClose={handleDetailClose}
+        />
+      ) : (
+        <>
+          <RequestList
+            onCreateClick={handleCreateClick}
+            onRowClick={handleRowClick}
+          />
+
+          <RequestForm
+            show={showCreateForm}
+            onClose={handleFormClose}
+            onSuccess={handleFormSuccess}
+          />
+        </>
+      )}
     </Container>
   );
-}
+};
 
 export default RequestsPage;
