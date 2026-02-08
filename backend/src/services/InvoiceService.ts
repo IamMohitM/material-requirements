@@ -36,9 +36,25 @@ interface MatchResult {
 }
 
 export class InvoiceService {
-  private invoiceRepository = AppDataSource.getRepository(Invoice);
-  private poRepository = AppDataSource.getRepository(PurchaseOrder);
-  private deliveryRepository = AppDataSource.getRepository(Delivery);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getInvoiceRepository() {
+    return AppDataSource.getRepository(Invoice);
+  }
+
+  private getPoRepository() {
+    return AppDataSource.getRepository(PurchaseOrder);
+  }
+
+  private getDeliveryRepository() {
+    return AppDataSource.getRepository(Delivery);
+  }
+
+
+  
+  
+  
 
   // Default tolerances
   private PRICE_TOLERANCE_PCT = 5; // 5%
@@ -70,7 +86,7 @@ export class InvoiceService {
     }
 
     // Check invoice number uniqueness
-    const existingInvoice = await this.invoiceRepository.findOne({
+    const existingInvoice = await this.getInvoiceRepository().findOne({
       where: { invoice_number },
     });
 
@@ -81,7 +97,7 @@ export class InvoiceService {
     }
 
     // Fetch and validate PO
-    const po = await this.poRepository.findOne({ where: { id: po_id } });
+    const po = await this.getPoRepository().findOne({ where: { id: po_id } });
     if (!po) {
       throw new NotFoundError('PurchaseOrder', po_id);
     }
@@ -116,7 +132,7 @@ export class InvoiceService {
       );
     }
 
-    const invoice = this.invoiceRepository.create({
+    const invoice = this.getInvoiceRepository().create({
       id: generateId(),
       invoice_number,
       po_id,
@@ -132,7 +148,7 @@ export class InvoiceService {
       notes,
     });
 
-    await this.invoiceRepository.save(invoice);
+    await this.getInvoiceRepository().save(invoice);
 
     // Trigger automatic 3-way matching
     await this.performThreeWayMatch(invoice.id);
@@ -144,7 +160,7 @@ export class InvoiceService {
    * Get invoice by ID
    */
   async getInvoiceById(id: string): Promise<Invoice> {
-    const invoice = await this.invoiceRepository.findOne({
+    const invoice = await this.getInvoiceRepository().findOne({
       where: { id },
     });
 
@@ -165,7 +181,7 @@ export class InvoiceService {
   ): Promise<PaginatedResponse<Invoice>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.invoiceRepository
+    const [items, total] = await this.getInvoiceRepository()
       .createQueryBuilder('invoice')
       .where('invoice.po_id = :po_id', { po_id })
       .orderBy('invoice.invoice_date', 'DESC')
@@ -201,7 +217,7 @@ export class InvoiceService {
     } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.invoiceRepository.createQueryBuilder('invoice');
+    const query = this.getInvoiceRepository().createQueryBuilder('invoice');
 
     if (status) {
       query.andWhere('invoice.status = :status', { status });
@@ -259,7 +275,7 @@ export class InvoiceService {
     if (updates.line_items) invoice.line_items = updates.line_items as any;
     if (updates.total_amount) invoice.total_amount = updates.total_amount;
 
-    await this.invoiceRepository.save(invoice);
+    await this.getInvoiceRepository().save(invoice);
     return invoice;
   }
 
@@ -275,7 +291,7 @@ export class InvoiceService {
       );
     }
 
-    await this.invoiceRepository.remove(invoice);
+    await this.getInvoiceRepository().remove(invoice);
   }
 
   /**
@@ -283,7 +299,7 @@ export class InvoiceService {
    */
   async performThreeWayMatch(invoice_id: string): Promise<MatchResult> {
     const invoice = await this.getInvoiceById(invoice_id);
-    const po = await this.poRepository.findOne({
+    const po = await this.getPoRepository().findOne({
       where: { id: invoice.po_id },
     });
 
@@ -292,7 +308,7 @@ export class InvoiceService {
     }
 
     // Get all deliveries for this PO
-    const deliveries = await this.deliveryRepository.find({
+    const deliveries = await this.getDeliveryRepository().find({
       where: { po_id: invoice.po_id },
     });
 
@@ -442,7 +458,7 @@ export class InvoiceService {
       warning_count: warningCount,
     };
 
-    await this.invoiceRepository.save(invoice);
+    await this.getInvoiceRepository().save(invoice);
 
     // Auto-log discrepancies
     for (const discrepancy of discrepancies) {
@@ -494,7 +510,7 @@ export class InvoiceService {
     invoice.approved_at = new Date();
     invoice.approval_notes = approval_notes;
 
-    await this.invoiceRepository.save(invoice);
+    await this.getInvoiceRepository().save(invoice);
     return invoice;
   }
 
@@ -511,7 +527,7 @@ export class InvoiceService {
     invoice.status = InvoiceStatus.REJECTED;
     invoice.notes = `${invoice.notes || ''}\nRejection reason: ${reason}`.trim();
 
-    await this.invoiceRepository.save(invoice);
+    await this.getInvoiceRepository().save(invoice);
     return invoice;
   }
 

@@ -12,7 +12,12 @@ import { generateId } from '@utils/helpers';
 import { UserRole, JWTPayload } from '../types/index';
 
 export class AuthService {
-  private userRepository = AppDataSource.getRepository(User);
+  /**
+   * Get user repository with lazy initialization
+   */
+  private getUserRepository() {
+    return AppDataSource.getRepository(User);
+  }
 
   /**
    * Register a new user
@@ -24,7 +29,7 @@ export class AuthService {
     role: UserRole = UserRole.SITE_ENGINEER
   ): Promise<{ user: Partial<User>; token: string }> {
     // Check if user exists
-    const existingUser = await this.userRepository.findOne({
+    const existingUser = await this.getUserRepository().findOne({
       where: { email },
     });
 
@@ -41,7 +46,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = this.userRepository.create({
+    const user = this.getUserRepository().create({
       id: generateId(),
       email,
       password_hash: passwordHash,
@@ -51,7 +56,7 @@ export class AuthService {
       is_active: true,
     });
 
-    await this.userRepository.save(user);
+    await this.getUserRepository().save(user);
 
     // Generate token
     const token = generateToken({
@@ -74,7 +79,7 @@ export class AuthService {
     password: string
   ): Promise<{ user: Partial<User>; accessToken: string; refreshToken: string }> {
     // Find user
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { email },
     });
 
@@ -95,7 +100,7 @@ export class AuthService {
 
     // Update last login
     user.last_login = new Date();
-    await this.userRepository.save(user);
+    await this.getUserRepository().save(user);
 
     // Generate tokens
     const accessToken = generateToken({
@@ -128,7 +133,7 @@ export class AuthService {
       const payload = verifyToken(refreshToken) as JWTPayload;
 
       // Verify user still exists and is active
-      const user = await this.userRepository.findOne({
+      const user = await this.getUserRepository().findOne({
         where: { id: payload.id, is_active: true },
       });
 
@@ -151,7 +156,7 @@ export class AuthService {
    * Get user by ID
    */
   async getUserById(id: string): Promise<Partial<User>> {
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { id },
     });
 
@@ -166,7 +171,7 @@ export class AuthService {
    * Get user by email
    */
   async getUserByEmail(email: string): Promise<Partial<User>> {
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { email },
     });
 
@@ -184,7 +189,7 @@ export class AuthService {
     id: string,
     updates: Partial<User>
   ): Promise<Partial<User>> {
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { id },
     });
 
@@ -200,7 +205,7 @@ export class AuthService {
       }
     });
 
-    await this.userRepository.save(user);
+    await this.getUserRepository().save(user);
 
     return this.sanitizeUser(user);
   }
@@ -213,7 +218,7 @@ export class AuthService {
     oldPassword: string,
     newPassword: string
   ): Promise<void> {
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { id: userId },
     });
 
@@ -235,14 +240,14 @@ export class AuthService {
 
     // Hash and save new password
     user.password_hash = await bcrypt.hash(newPassword, 10);
-    await this.userRepository.save(user);
+    await this.getUserRepository().save(user);
   }
 
   /**
    * Deactivate user account
    */
   async deactivateUser(id: string): Promise<void> {
-    const user = await this.userRepository.findOne({
+    const user = await this.getUserRepository().findOne({
       where: { id },
     });
 
@@ -251,7 +256,7 @@ export class AuthService {
     }
 
     user.is_active = false;
-    await this.userRepository.save(user);
+    await this.getUserRepository().save(user);
   }
 
   /**

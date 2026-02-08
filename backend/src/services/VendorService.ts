@@ -10,8 +10,20 @@ import {
 import { PaginatedResponse, VerificationStatus } from '../types/index';
 
 export class VendorService {
-  private vendorRepository = AppDataSource.getRepository(Vendor);
-  private rateHistoryRepository = AppDataSource.getRepository(VendorRateHistory);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getVendorRepository() {
+    return AppDataSource.getRepository(Vendor);
+  }
+
+  private getRateHistoryRepository() {
+    return AppDataSource.getRepository(VendorRateHistory);
+  }
+
+
+  
+  
 
   /**
    * Create a new vendor
@@ -30,7 +42,7 @@ export class VendorService {
       );
     }
 
-    const vendor = this.vendorRepository.create({
+    const vendor = this.getVendorRepository().create({
       id: generateId(),
       name,
       contact_person,
@@ -44,7 +56,7 @@ export class VendorService {
       is_active: true,
     });
 
-    await this.vendorRepository.save(vendor);
+    await this.getVendorRepository().save(vendor);
     return vendor;
   }
 
@@ -52,7 +64,7 @@ export class VendorService {
    * Get vendor by ID
    */
   async getVendorById(id: string): Promise<Vendor> {
-    const vendor = await this.vendorRepository.findOne({
+    const vendor = await this.getVendorRepository().findOne({
       where: { id },
     });
 
@@ -74,7 +86,7 @@ export class VendorService {
     const { isActive = true, page = 1, pageSize = 20 } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.vendorRepository.createQueryBuilder('vendor');
+    const query = this.getVendorRepository().createQueryBuilder('vendor');
 
     if (isActive !== undefined) {
       query.andWhere('vendor.is_active = :isActive', { isActive });
@@ -122,7 +134,7 @@ export class VendorService {
     if (updates.rating !== undefined) vendor.rating = updates.rating;
     if (updates.is_active !== undefined) vendor.is_active = updates.is_active;
 
-    await this.vendorRepository.save(vendor);
+    await this.getVendorRepository().save(vendor);
     return vendor;
   }
 
@@ -136,7 +148,7 @@ export class VendorService {
     notes?: string
   ): Promise<VendorRateHistory> {
     // Get previous rate
-    const previousRate = await this.rateHistoryRepository.findOne({
+    const previousRate = await this.getRateHistoryRepository().findOne({
       where: { vendor_id, material_id },
       order: { effective_date: 'DESC' },
     });
@@ -149,7 +161,7 @@ export class VendorService {
       ? (change_from_previous! / previousRate.price_per_unit) * 100
       : undefined;
 
-    const rateRecord = this.rateHistoryRepository.create({
+    const rateRecord = this.getRateHistoryRepository().create({
       id: generateId(),
       vendor_id,
       material_id,
@@ -160,7 +172,7 @@ export class VendorService {
       notes,
     });
 
-    await this.rateHistoryRepository.save(rateRecord);
+    await this.getRateHistoryRepository().save(rateRecord);
     return rateRecord;
   }
 
@@ -174,7 +186,7 @@ export class VendorService {
   ): Promise<VendorRateHistory[]> {
     const limit = options?.limit || 10;
 
-    return this.rateHistoryRepository.find({
+    return this.getRateHistoryRepository().find({
       where: { vendor_id, material_id },
       order: { effective_date: 'DESC' },
       take: limit,
@@ -188,7 +200,7 @@ export class VendorService {
     vendor_id: string,
     material_id: string
   ): Promise<VendorRateHistory | null> {
-    return this.rateHistoryRepository.findOne({
+    return this.getRateHistoryRepository().findOne({
       where: { vendor_id, material_id },
       order: { effective_date: 'DESC' },
     });
@@ -204,7 +216,7 @@ export class VendorService {
   ): Promise<PaginatedResponse<Vendor>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const qb = this.vendorRepository
+    const qb = this.getVendorRepository()
       .createQueryBuilder('vendor')
       .where('vendor.name ILIKE :query OR vendor.vendor_code ILIKE :query', {
         query: `%${query}%`,

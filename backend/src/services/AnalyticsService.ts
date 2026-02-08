@@ -33,9 +33,25 @@ export interface VendorPerformance {
 }
 
 export class AnalyticsService {
-  private poRepository = AppDataSource.getRepository(PurchaseOrder);
-  private consumptionRepository = AppDataSource.getRepository(MaterialConsumption);
-  private rateHistoryRepository = AppDataSource.getRepository(VendorRateHistory);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getPoRepository() {
+    return AppDataSource.getRepository(PurchaseOrder);
+  }
+
+  private getConsumptionRepository() {
+    return AppDataSource.getRepository(MaterialConsumption);
+  }
+
+  private getRateHistoryRepository() {
+    return AppDataSource.getRepository(VendorRateHistory);
+  }
+
+
+  
+  
+  
 
   /**
    * Get project dashboard metrics
@@ -44,7 +60,7 @@ export class AnalyticsService {
     // TODO: Get actual project data from ProjectService
     // For now, return stub
 
-    const pos = await this.poRepository.find({
+    const pos = await this.getPoRepository().find({
       where: { project_id },
     });
 
@@ -210,7 +226,7 @@ export class AnalyticsService {
     latest_price: number;
     trend: 'increasing' | 'decreasing' | 'stable';
   }> {
-    const rateHistory = await this.rateHistoryRepository.find({
+    const rateHistory = await this.getRateHistoryRepository().find({
       where: { vendor_id, material_id },
       order: { effective_date: 'ASC' },
     });

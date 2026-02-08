@@ -15,7 +15,15 @@ export interface AuditLogEntry {
 }
 
 export class AuditService {
-  private auditRepository = AppDataSource.getRepository(AuditLog);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getAuditRepository() {
+    return AppDataSource.getRepository(AuditLog);
+  }
+
+
+  
 
   /**
    * Log an action
@@ -30,7 +38,7 @@ export class AuditService {
     ip_address?: string,
     user_agent?: string
   ): Promise<AuditLog> {
-    const auditLog = this.auditRepository.create({
+    const auditLog = this.getAuditRepository().create({
       id: generateId(),
       actor_id,
       event_type,
@@ -45,7 +53,7 @@ export class AuditService {
       status: AuditStatus.SUCCESS,
     } as any);
 
-    await this.auditRepository.save(auditLog);
+    await this.getAuditRepository().save(auditLog);
     return auditLog as any as AuditLog;
   }
 
@@ -60,7 +68,7 @@ export class AuditService {
   ): Promise<PaginatedResponse<AuditLog>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.auditRepository
+    const [items, total] = await this.getAuditRepository()
       .createQueryBuilder('audit')
       .where('audit.entity_type = :entity_type', { entity_type })
       .andWhere('audit.entity_id = :entity_id', { entity_id })
@@ -88,7 +96,7 @@ export class AuditService {
   ): Promise<PaginatedResponse<AuditLog>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.auditRepository
+    const [items, total] = await this.getAuditRepository()
       .createQueryBuilder('audit')
       .where('audit.user_id = :user_id', { user_id })
       .orderBy('audit.timestamp', 'DESC')
@@ -115,7 +123,7 @@ export class AuditService {
   ): Promise<PaginatedResponse<AuditLog>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.auditRepository
+    const [items, total] = await this.getAuditRepository()
       .createQueryBuilder('audit')
       .where('audit.action = :action', { action })
       .orderBy('audit.timestamp', 'DESC')
@@ -143,7 +151,7 @@ export class AuditService {
   ): Promise<PaginatedResponse<AuditLog>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.auditRepository
+    const [items, total] = await this.getAuditRepository()
       .createQueryBuilder('audit')
       .where('audit.timestamp >= :start_date', { start_date })
       .andWhere('audit.timestamp <= :end_date', { end_date })
@@ -180,7 +188,7 @@ export class AuditService {
     }>;
     final_state: any;
   }> {
-    const logs = await this.auditRepository.find({
+    const logs = await this.getAuditRepository().find({
       where: { aggregate_type: entity_type, aggregate_id: entity_id },
       order: { timestamp: 'ASC' },
     });

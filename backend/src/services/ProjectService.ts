@@ -9,7 +9,15 @@ import {
 import { ProjectStatus, PaginatedResponse } from '../types/index';
 
 export class ProjectService {
-  private projectRepository = AppDataSource.getRepository(Project);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getProjectRepository() {
+    return AppDataSource.getRepository(Project);
+  }
+
+
+  
 
   /**
    * Create a new project
@@ -28,7 +36,7 @@ export class ProjectService {
       throw new ValidationError('Project name and budget are required');
     }
 
-    const project = this.projectRepository.create({
+    const project = this.getProjectRepository().create({
       id: generateId(),
       name,
       location,
@@ -41,7 +49,7 @@ export class ProjectService {
       description,
     });
 
-    await this.projectRepository.save(project);
+    await this.getProjectRepository().save(project);
     return project;
   }
 
@@ -49,7 +57,7 @@ export class ProjectService {
    * Get project by ID
    */
   async getProjectById(id: string): Promise<Project> {
-    const project = await this.projectRepository.findOne({
+    const project = await this.getProjectRepository().findOne({
       where: { id },
     });
 
@@ -72,7 +80,7 @@ export class ProjectService {
     const { status, owner_id, page = 1, pageSize = 20 } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.projectRepository.createQueryBuilder('project');
+    const query = this.getProjectRepository().createQueryBuilder('project');
 
     if (status) {
       query.andWhere('project.status = :status', { status });
@@ -118,7 +126,7 @@ export class ProjectService {
     if (updates.status) project.status = updates.status;
     if (updates.end_date) project.end_date = updates.end_date;
 
-    await this.projectRepository.save(project);
+    await this.getProjectRepository().save(project);
     return project;
   }
 
@@ -128,7 +136,7 @@ export class ProjectService {
   async deleteProject(id: string): Promise<void> {
     const project = await this.getProjectById(id);
     project.status = ProjectStatus.PAUSED;
-    await this.projectRepository.save(project);
+    await this.getProjectRepository().save(project);
   }
 }
 

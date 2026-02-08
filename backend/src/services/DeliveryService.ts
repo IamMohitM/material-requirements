@@ -22,8 +22,20 @@ interface DeliveryLineItem {
 }
 
 export class DeliveryService {
-  private deliveryRepository = AppDataSource.getRepository(Delivery);
-  private poRepository = AppDataSource.getRepository(PurchaseOrder);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getDeliveryRepository() {
+    return AppDataSource.getRepository(Delivery);
+  }
+
+  private getPoRepository() {
+    return AppDataSource.getRepository(PurchaseOrder);
+  }
+
+
+  
+  
 
   /**
    * Create a delivery record with validation
@@ -46,7 +58,7 @@ export class DeliveryService {
     }
 
     // Fetch PO and validate
-    const po = await this.poRepository.findOne({ where: { id: po_id } });
+    const po = await this.getPoRepository().findOne({ where: { id: po_id } });
     if (!po) {
       throw new NotFoundError('PurchaseOrder', po_id);
     }
@@ -104,7 +116,7 @@ export class DeliveryService {
     // Generate delivery number: DL-YYYY-MM-DDNNN
     const deliveryNumber = this.generateDeliveryNumber();
 
-    const delivery = this.deliveryRepository.create({
+    const delivery = this.getDeliveryRepository().create({
       id: generateId(),
       delivery_number: deliveryNumber,
       po_id,
@@ -118,7 +130,7 @@ export class DeliveryService {
       line_items: enrichedLineItems as any,
     });
 
-    await this.deliveryRepository.save(delivery);
+    await this.getDeliveryRepository().save(delivery);
 
     // Update PO delivery status
     await this.updatePODeliveryStatus(po_id);
@@ -130,7 +142,7 @@ export class DeliveryService {
    * Get delivery by ID
    */
   async getDeliveryById(id: string): Promise<Delivery> {
-    const delivery = await this.deliveryRepository.findOne({
+    const delivery = await this.getDeliveryRepository().findOne({
       where: { id },
     });
 
@@ -151,7 +163,7 @@ export class DeliveryService {
   ): Promise<PaginatedResponse<Delivery>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.deliveryRepository
+    const [items, total] = await this.getDeliveryRepository()
       .createQueryBuilder('delivery')
       .where('delivery.po_id = :po_id', { po_id })
       .orderBy('delivery.delivery_date', 'DESC')
@@ -179,7 +191,7 @@ export class DeliveryService {
     const { status, page = 1, pageSize = 20 } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.deliveryRepository.createQueryBuilder('delivery');
+    const query = this.getDeliveryRepository().createQueryBuilder('delivery');
 
     if (status) {
       query.andWhere('delivery.status = :status', { status });
@@ -241,7 +253,7 @@ export class DeliveryService {
       }) as any;
     }
 
-    await this.deliveryRepository.save(delivery);
+    await this.getDeliveryRepository().save(delivery);
     return delivery;
   }
 
@@ -257,7 +269,7 @@ export class DeliveryService {
       );
     }
 
-    await this.deliveryRepository.remove(delivery);
+    await this.getDeliveryRepository().remove(delivery);
 
     // Update PO delivery status
     await this.updatePODeliveryStatus(delivery.po_id);
@@ -277,7 +289,7 @@ export class DeliveryService {
     }
 
     delivery.status = DeliveryStatus.COMPLETE;
-    await this.deliveryRepository.save(delivery);
+    await this.getDeliveryRepository().save(delivery);
 
     // Update PO delivery status
     await this.updatePODeliveryStatus(delivery.po_id);
@@ -303,7 +315,7 @@ export class DeliveryService {
     po_id: string,
     material_id: string
   ): Promise<number> {
-    const deliveries = await this.deliveryRepository.find({
+    const deliveries = await this.getDeliveryRepository().find({
       where: { po_id },
     });
 
@@ -325,10 +337,10 @@ export class DeliveryService {
    * Update PO delivery status based on deliveries
    */
   private async updatePODeliveryStatus(po_id: string): Promise<void> {
-    const po = await this.poRepository.findOne({ where: { id: po_id } });
+    const po = await this.getPoRepository().findOne({ where: { id: po_id } });
     if (!po) return;
 
-    const deliveries = await this.deliveryRepository.find({
+    const deliveries = await this.getDeliveryRepository().find({
       where: { po_id },
     });
 
@@ -362,7 +374,7 @@ export class DeliveryService {
       po.delivery_status = 'PARTIALLY_RECEIVED';
     }
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
   }
 
   /**

@@ -9,7 +9,15 @@ import {
 import { PaginatedResponse } from '../types/index';
 
 export class BrandService {
-  private brandRepository = AppDataSource.getRepository(Brand);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getBrandRepository() {
+    return AppDataSource.getRepository(Brand);
+  }
+
+
+  
 
   /**
    * Create a new brand
@@ -27,7 +35,7 @@ export class BrandService {
       );
     }
 
-    const brand = this.brandRepository.create({
+    const brand = this.getBrandRepository().create({
       id: generateId(),
       material_id,
       vendor_id,
@@ -37,7 +45,7 @@ export class BrandService {
       is_active: true,
     });
 
-    await this.brandRepository.save(brand);
+    await this.getBrandRepository().save(brand);
     return brand;
   }
 
@@ -45,7 +53,7 @@ export class BrandService {
    * Get brand by ID
    */
   async getBrandById(id: string): Promise<Brand> {
-    const brand = await this.brandRepository.findOne({
+    const brand = await this.getBrandRepository().findOne({
       where: { id },
     });
 
@@ -66,7 +74,7 @@ export class BrandService {
   ): Promise<PaginatedResponse<Brand>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.brandRepository
+    const [items, total] = await this.getBrandRepository()
       .createQueryBuilder('brand')
       .where('brand.material_id = :material_id', { material_id })
       .andWhere('brand.is_active = true')
@@ -94,7 +102,7 @@ export class BrandService {
   ): Promise<PaginatedResponse<Brand>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.brandRepository
+    const [items, total] = await this.getBrandRepository()
       .createQueryBuilder('brand')
       .where('brand.vendor_id = :vendor_id', { vendor_id })
       .andWhere('brand.is_active = true')
@@ -119,7 +127,7 @@ export class BrandService {
     material_id: string,
     vendor_id: string
   ): Promise<Brand[]> {
-    return this.brandRepository.find({
+    return this.getBrandRepository().find({
       where: {
         material_id,
         vendor_id,
@@ -148,7 +156,7 @@ export class BrandService {
     if (updates.cost_impact !== undefined) brand.cost_impact = updates.cost_impact;
     if (updates.is_active !== undefined) brand.is_active = updates.is_active;
 
-    await this.brandRepository.save(brand);
+    await this.getBrandRepository().save(brand);
     return brand;
   }
 
@@ -171,7 +179,7 @@ export class BrandService {
     } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.brandRepository.createQueryBuilder('brand');
+    const query = this.getBrandRepository().createQueryBuilder('brand');
 
     if (is_active !== undefined) {
       query.andWhere('brand.is_active = :is_active', { is_active });

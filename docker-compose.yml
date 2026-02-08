@@ -64,7 +64,7 @@ services:
       dockerfile: Dockerfile
     container_name: mrms-api
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       API_PORT: 3000
       DB_HOST: db
       DB_PORT: 5432

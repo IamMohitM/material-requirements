@@ -10,7 +10,15 @@ import {
 import { QuoteStatus, PaginatedResponse } from '../types/index';
 
 export class QuoteService {
-  private quoteRepository = AppDataSource.getRepository(Quote);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getQuoteRepository() {
+    return AppDataSource.getRepository(Quote);
+  }
+
+
+  
 
   /**
    * Create a quote from a request
@@ -33,7 +41,7 @@ export class QuoteService {
     const validity_date = new Date();
     validity_date.setDate(validity_date.getDate() + valid_days);
 
-    const quote = this.quoteRepository.create({
+    const quote = this.getQuoteRepository().create({
       id: generateId(),
       quote_number: generateQuoteNumber(),
       request_id,
@@ -47,7 +55,7 @@ export class QuoteService {
       status: QuoteStatus.SENT,
     });
 
-    await this.quoteRepository.save(quote);
+    await this.getQuoteRepository().save(quote);
     return quote;
   }
 
@@ -55,7 +63,7 @@ export class QuoteService {
    * Get quote by ID
    */
   async getQuoteById(id: string): Promise<Quote> {
-    const quote = await this.quoteRepository.findOne({
+    const quote = await this.getQuoteRepository().findOne({
       where: { id },
     });
 
@@ -76,7 +84,7 @@ export class QuoteService {
   ): Promise<PaginatedResponse<Quote>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.quoteRepository
+    const [items, total] = await this.getQuoteRepository()
       .createQueryBuilder('quote')
       .where('quote.request_id = :request_id', { request_id })
       .orderBy('quote.created_at', 'DESC')
@@ -105,7 +113,7 @@ export class QuoteService {
     const { status, vendor_id, page = 1, pageSize = 20 } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.quoteRepository.createQueryBuilder('quote');
+    const query = this.getQuoteRepository().createQueryBuilder('quote');
 
     if (status) {
       query.andWhere('quote.status = :status', { status });
@@ -143,7 +151,7 @@ export class QuoteService {
     }
 
     quote.status = QuoteStatus.ACCEPTED;
-    await this.quoteRepository.save(quote);
+    await this.getQuoteRepository().save(quote);
     return quote;
   }
 
@@ -161,7 +169,7 @@ export class QuoteService {
 
     quote.status = QuoteStatus.REJECTED;
 
-    await this.quoteRepository.save(quote);
+    await this.getQuoteRepository().save(quote);
     return quote;
   }
 
@@ -178,7 +186,7 @@ export class QuoteService {
     }
 
     quote.status = QuoteStatus.RECEIVED;
-    await this.quoteRepository.save(quote);
+    await this.getQuoteRepository().save(quote);
     return quote;
   }
 
@@ -193,7 +201,7 @@ export class QuoteService {
    * Get non-expired quotes for request
    */
   async getActiveQuotesForRequest(request_id: string): Promise<Quote[]> {
-    const quotes = await this.quoteRepository.find({
+    const quotes = await this.getQuoteRepository().find({
       where: { request_id },
     });
 

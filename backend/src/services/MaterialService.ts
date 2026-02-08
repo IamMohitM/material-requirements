@@ -9,7 +9,15 @@ import {
 import { PaginatedResponse } from '../types/index';
 
 export class MaterialService {
-  private materialRepository = AppDataSource.getRepository(Material);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getMaterialRepository() {
+    return AppDataSource.getRepository(Material);
+  }
+
+
+  
 
   /**
    * Create a new material
@@ -26,7 +34,7 @@ export class MaterialService {
       );
     }
 
-    const material = this.materialRepository.create({
+    const material = this.getMaterialRepository().create({
       id: generateId(),
       name,
       category,
@@ -35,7 +43,7 @@ export class MaterialService {
       is_active: true,
     });
 
-    await this.materialRepository.save(material);
+    await this.getMaterialRepository().save(material);
     return material;
   }
 
@@ -43,7 +51,7 @@ export class MaterialService {
    * Get material by ID
    */
   async getMaterialById(id: string): Promise<Material> {
-    const material = await this.materialRepository.findOne({
+    const material = await this.getMaterialRepository().findOne({
       where: { id },
     });
 
@@ -58,7 +66,7 @@ export class MaterialService {
    * Get material by name
    */
   async getMaterialByName(name: string): Promise<Material> {
-    const material = await this.materialRepository.findOne({
+    const material = await this.getMaterialRepository().findOne({
       where: { name },
     });
 
@@ -81,7 +89,7 @@ export class MaterialService {
     const { category, isActive = true, page = 1, pageSize = 20 } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.materialRepository.createQueryBuilder('material');
+    const query = this.getMaterialRepository().createQueryBuilder('material');
 
     if (category) {
       query.andWhere('material.category = :category', { category });
@@ -125,7 +133,7 @@ export class MaterialService {
     if (updates.description) material.description = updates.description;
     if (updates.is_active !== undefined) material.is_active = updates.is_active;
 
-    await this.materialRepository.save(material);
+    await this.getMaterialRepository().save(material);
     return material;
   }
 
@@ -150,7 +158,7 @@ export class MaterialService {
   ): Promise<PaginatedResponse<Material>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const qb = this.materialRepository
+    const qb = this.getMaterialRepository()
       .createQueryBuilder('material')
       .where('material.name ILIKE :query OR material.material_code ILIKE :query', {
         query: `%${query}%`,

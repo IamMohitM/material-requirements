@@ -2,6 +2,10 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from './env';
 import * as entities from '../entities';
 
+// Determine if we're running from compiled dist or source
+const isCompiledRuntime = __dirname.includes('dist');
+const migrationsPath = isCompiledRuntime ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'];
+
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: config.DB_HOST,
@@ -10,11 +14,11 @@ export const dataSourceOptions: DataSourceOptions = {
   password: config.DB_PASSWORD,
   database: config.DB_NAME,
   entities: Object.values(entities),
-  migrations: config.isDevelopment ? ['src/migrations/*.ts'] : ['dist/migrations/*.js'],
+  migrations: migrationsPath,
   synchronize: false, // Use migrations instead
   logging: config.isDevelopment,
-  poolSize: 20, // Increase pool size for better connection management
-  maxQueryExecutionTime: 1000, // Log slow queries
+  poolSize: 10,
+  maxQueryExecutionTime: 5000, // Log slow queries
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 };
 

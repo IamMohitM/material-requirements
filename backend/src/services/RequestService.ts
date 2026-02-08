@@ -11,7 +11,15 @@ import { RequestStatus, IRequest, LineItem, PaginatedResponse } from '../types/i
 import { In } from 'typeorm';
 
 export class RequestService {
-  private requestRepository = AppDataSource.getRepository(Request);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getRequestRepository() {
+    return AppDataSource.getRepository(Request);
+  }
+
+
+  
 
   /**
    * Create a new material request
@@ -37,7 +45,7 @@ export class RequestService {
       }
     }
 
-    const request = this.requestRepository.create({
+    const request = this.getRequestRepository().create({
       id: generateId(),
       project_id: projectId,
       requester_id: requesterId,
@@ -50,7 +58,7 @@ export class RequestService {
       status: RequestStatus.DRAFT,
     });
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -58,7 +66,7 @@ export class RequestService {
    * Get request by ID
    */
   async getRequestById(id: string): Promise<Request> {
-    const request = await this.requestRepository.findOne({
+    const request = await this.getRequestRepository().findOne({
       where: { id },
     });
 
@@ -89,7 +97,7 @@ export class RequestService {
 
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.requestRepository.createQueryBuilder('request');
+    const query = this.getRequestRepository().createQueryBuilder('request');
 
     if (projectId) {
       query.andWhere('request.project_id = :projectId', { projectId });
@@ -157,7 +165,7 @@ export class RequestService {
       request.comments = updates.comments;
     }
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -176,7 +184,7 @@ export class RequestService {
     request.status = RequestStatus.SUBMITTED;
     request.requested_date = new Date();
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -203,7 +211,7 @@ export class RequestService {
       comments,
     };
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -230,7 +238,7 @@ export class RequestService {
       reason,
     };
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -248,7 +256,7 @@ export class RequestService {
 
     request.status = RequestStatus.CONVERTED_TO_PO;
 
-    await this.requestRepository.save(request);
+    await this.getRequestRepository().save(request);
     return request;
   }
 
@@ -264,7 +272,7 @@ export class RequestService {
       );
     }
 
-    await this.requestRepository.remove(request);
+    await this.getRequestRepository().remove(request);
   }
 
   /**
@@ -284,7 +292,7 @@ export class RequestService {
   async countRequestsByStatus(
     projectId: string
   ): Promise<Record<RequestStatus, number>> {
-    const counts = await this.requestRepository
+    const counts = await this.getRequestRepository()
       .createQueryBuilder('request')
       .where('request.project_id = :projectId', { projectId })
       .groupBy('request.status')

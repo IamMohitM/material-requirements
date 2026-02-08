@@ -9,7 +9,15 @@ import {
 import { DiscrepancyType, DiscrepancySeverity, DiscrepancyStatus, PaginatedResponse } from '../types/index';
 
 export class DiscrepancyService {
-  private discrepancyRepository = AppDataSource.getRepository(DiscrepancyLog);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getDiscrepancyRepository() {
+    return AppDataSource.getRepository(DiscrepancyLog);
+  }
+
+
+  
 
   /**
    * Log a discrepancy
@@ -29,7 +37,7 @@ export class DiscrepancyService {
       );
     }
 
-    const discrepancy = this.discrepancyRepository.create({
+    const discrepancy = this.getDiscrepancyRepository().create({
       id: generateId(),
       po_id,
       delivery_id,
@@ -42,7 +50,7 @@ export class DiscrepancyService {
       status: DiscrepancyStatus.OPEN,
     });
 
-    await this.discrepancyRepository.save(discrepancy);
+    await this.getDiscrepancyRepository().save(discrepancy);
 
     // TODO: Send alerts for critical discrepancies
 
@@ -53,7 +61,7 @@ export class DiscrepancyService {
    * Get discrepancy by ID
    */
   async getDiscrepancyById(id: string): Promise<DiscrepancyLog> {
-    const discrepancy = await this.discrepancyRepository.findOne({
+    const discrepancy = await this.getDiscrepancyRepository().findOne({
       where: { id },
     });
 
@@ -74,7 +82,7 @@ export class DiscrepancyService {
   ): Promise<PaginatedResponse<DiscrepancyLog>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const [items, total] = await this.discrepancyRepository
+    const [items, total] = await this.getDiscrepancyRepository()
       .createQueryBuilder('discrepancy')
       .where('discrepancy.po_id = :po_id', { po_id })
       .orderBy('discrepancy.flagged_at', 'DESC')
@@ -112,7 +120,7 @@ export class DiscrepancyService {
     } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.discrepancyRepository.createQueryBuilder('discrepancy');
+    const query = this.getDiscrepancyRepository().createQueryBuilder('discrepancy');
 
     if (status) {
       query.andWhere('discrepancy.status = :status', { status });
@@ -167,7 +175,7 @@ export class DiscrepancyService {
       discrepancy.resolved_at = new Date();
     }
 
-    await this.discrepancyRepository.save(discrepancy);
+    await this.getDiscrepancyRepository().save(discrepancy);
     return discrepancy;
   }
 
@@ -201,7 +209,7 @@ export class DiscrepancyService {
     discrepancy.resolved_at = new Date();
     discrepancy.resolution_notes = `Waived: ${reason}`;
 
-    await this.discrepancyRepository.save(discrepancy);
+    await this.getDiscrepancyRepository().save(discrepancy);
     return discrepancy;
   }
 
@@ -218,7 +226,7 @@ export class DiscrepancyService {
     discrepancy.resolved_by_id = reviewed_by_id;
     discrepancy.resolved_at = new Date();
 
-    await this.discrepancyRepository.save(discrepancy);
+    await this.getDiscrepancyRepository().save(discrepancy);
     return discrepancy;
   }
 
@@ -241,7 +249,7 @@ export class DiscrepancyService {
    * Get critical discrepancies for a project
    */
   async getOpenCriticalDiscrepancies(po_id: string): Promise<DiscrepancyLog[]> {
-    return this.discrepancyRepository.find({
+    return this.getDiscrepancyRepository().find({
       where: {
         po_id,
         severity: DiscrepancySeverity.CRITICAL,
@@ -265,7 +273,7 @@ export class DiscrepancyService {
     resolved: number;
     waived: number;
   }> {
-    const discrepancies = await this.discrepancyRepository.find({
+    const discrepancies = await this.getDiscrepancyRepository().find({
       where: { po_id },
     });
 

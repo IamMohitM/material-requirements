@@ -11,8 +11,20 @@ import {
 import { POStatus, ApprovalStatus, PaginatedResponse } from '../types/index';
 
 export class POService {
-  private poRepository = AppDataSource.getRepository(PurchaseOrder);
-  private poLineBrandRepository = AppDataSource.getRepository(POLineItemBrand);
+  /**
+   * Get repositories with lazy initialization
+   */
+  private getPoRepository() {
+    return AppDataSource.getRepository(PurchaseOrder);
+  }
+
+  private getPoLineBrandRepository() {
+    return AppDataSource.getRepository(POLineItemBrand);
+  }
+
+
+  
+  
 
   /**
    * Create a PO from a quote
@@ -35,7 +47,7 @@ export class POService {
       );
     }
 
-    const po = this.poRepository.create({
+    const po = this.getPoRepository().create({
       id: generateId(),
       po_number: generatePONumber(),
       project_id,
@@ -53,11 +65,11 @@ export class POService {
       created_by,
     });
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
 
     // Create brand tracking records
     for (const lineItem of line_items) {
-      await this.poLineBrandRepository.save({
+      await this.getPoLineBrandRepository().save({
         id: generateId(),
         po_id: po.id,
         material_id: lineItem.material_id,
@@ -72,7 +84,7 @@ export class POService {
    * Get PO by ID
    */
   async getPOById(id: string): Promise<PurchaseOrder> {
-    const po = await this.poRepository.findOne({
+    const po = await this.getPoRepository().findOne({
       where: { id },
     });
 
@@ -104,7 +116,7 @@ export class POService {
     } = options;
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.poRepository.createQueryBuilder('po');
+    const query = this.getPoRepository().createQueryBuilder('po');
 
     if (status) {
       query.andWhere('po.status = :status', { status });
@@ -177,7 +189,7 @@ export class POService {
       po.required_delivery_date = updates.required_delivery_date;
     }
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
     return po;
   }
 
@@ -194,7 +206,7 @@ export class POService {
     }
 
     po.status = POStatus.SENT;
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
     return po;
   }
 
@@ -229,7 +241,7 @@ export class POService {
 
     po.approval_chain = chain as any;
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
     return po;
   }
 
@@ -255,7 +267,7 @@ export class POService {
 
     po.approval_chain = chain as any;
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
     return po;
   }
 
@@ -270,12 +282,12 @@ export class POService {
   ): Promise<POLineItemBrand> {
     const po = await this.getPOById(po_id);
 
-    let poLineBrand = await this.poLineBrandRepository.findOne({
+    let poLineBrand = await this.getPoLineBrandRepository().findOne({
       where: { po_id, material_id },
     });
 
     if (!poLineBrand) {
-      poLineBrand = this.poLineBrandRepository.create({
+      poLineBrand = this.getPoLineBrandRepository().create({
         id: generateId(),
         po_id,
         material_id,
@@ -286,7 +298,7 @@ export class POService {
     poLineBrand.selected_date = new Date();
     poLineBrand.selected_by_id = selected_by;
 
-    await this.poLineBrandRepository.save(poLineBrand);
+    await this.getPoLineBrandRepository().save(poLineBrand);
 
     // Update PO line item with brand
     po.line_items = po.line_items.map((item: any) =>
@@ -295,7 +307,7 @@ export class POService {
         : item
     );
 
-    await this.poRepository.save(po);
+    await this.getPoRepository().save(po);
 
     return poLineBrand;
   }
@@ -311,7 +323,7 @@ export class POService {
   ): Promise<PaginatedResponse<PurchaseOrder>> {
     const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.poRepository
+    const query = this.getPoRepository()
       .createQueryBuilder('po')
       .where('po.approval_status = :status', { status: ApprovalStatus.PENDING })
       .andWhere('po.total_amount <= :limit', { limit: approval_limit });
