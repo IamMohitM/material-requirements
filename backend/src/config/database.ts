@@ -13,19 +13,16 @@ export const dataSourceOptions: DataSourceOptions = {
   migrations: config.isDevelopment ? ['src/migrations/*.ts'] : ['dist/migrations/*.js'],
   synchronize: false, // Use migrations instead
   logging: config.isDevelopment,
-  poolSize: config.DB_POOL_MAX,
+  poolSize: 20, // Increase pool size for better connection management
   maxQueryExecutionTime: 1000, // Log slow queries
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-  // Connection pool options
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-  max: 20, // TypeORM pool max connections
 };
 
 export const AppDataSource = new DataSource(dataSourceOptions);
 
 /**
  * Initialize database connection
+ * Note: Migrations are run separately via 'npm run migrate' to avoid connection pool issues
  */
 export async function initializeDatabase() {
   try {
@@ -33,15 +30,6 @@ export async function initializeDatabase() {
       console.log('Initializing database connection...');
       await AppDataSource.initialize();
       console.log('✓ Database connection established');
-
-      // Run migrations only during startup
-      try {
-        console.log('Running pending migrations...');
-        await AppDataSource.runMigrations({ transaction: 'each' });
-        console.log('✓ All migrations completed successfully');
-      } catch (migrationError: any) {
-        console.warn('Migration warning (non-fatal):', migrationError.message);
-      }
     }
   } catch (error) {
     console.error('✗ Failed to initialize database:', error);
