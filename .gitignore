@@ -75,3 +75,8 @@ artifacts/.env
 .mcp.json
 .envrc
 artifacts/
+
+# Session-specific development files (keep in artifacts only)
+SESSION_SUMMARY.md
+GITHUB_SETUP.md
+PUSH_TO_GITHUB.md

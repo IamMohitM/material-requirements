@@ -696,6 +696,44 @@ REACT_APP_ENV=development
 - [ ] Documentation updated
 - [ ] No console.logs in production code
 - [ ] Commit message is clear
+- [ ] No development-only files committed to main
+
+### Development-Only Files Policy
+
+**Files that should NOT be committed to the repository:**
+- Setup instructions (GITHUB_SETUP.md, PUSH_TO_GITHUB.md, etc.)
+- Session summaries and session notes
+- Development guides specific to a session
+- Temporary debugging files
+- Internal process documentation
+
+**Where to keep them:**
+- **Artifacts folder** (`/artifacts/`) - For development reference only
+- **Local machine** - If strictly personal notes
+- **Internal wiki** - If team documentation needed
+
+**Why this matters:**
+- Keeps the repository clean and professional
+- Reduces clutter for users and contributors
+- Separates internal development process from product code
+- Prevents confusion about what's actually part of the project
+
+**Pattern:**
+1. Create temporary files in `/artifacts/` during development
+2. Never commit these files to main branch
+3. Use `.gitignore` if they're generated files
+4. Keep only production-ready documentation in `/docs/`
+
+**Example Good Documentation:**
+- `/docs/requirements.md` - User stories and features ✅
+- `/docs/API.md` - API reference ✅
+- `/README.md` - Getting started guide ✅
+- `CLAUDE.md` - Project context and guidelines ✅
+
+**Example Development-Only (Don't commit):**
+- `SESSION_SUMMARY.md` - For this session only ❌
+- `GITHUB_SETUP.md` - Temporary helper ❌
+- `PUSH_TO_GITHUB.md` - Session-specific ❌
 
 ## Using Software Orchestrator Skill
 
