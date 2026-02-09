@@ -9,21 +9,18 @@ import {
 import { ProjectStatus } from '../types/index';
 
 @Entity('projects')
-@Index(['company_id'])
+@Index(['created_by_id'])
 @Index(['status'])
 @Index(['created_at'])
 export class Project {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 200 })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
-
-  @Column({ type: 'varchar', length: 500 })
-  location: string;
 
   @Column({ type: 'date' })
   start_date: Date;
@@ -42,10 +39,10 @@ export class Project {
   status: ProjectStatus;
 
   @Column({ type: 'uuid' })
-  company_id: string;
+  created_by_id: string;
 
-  @Column({ type: 'uuid' })
-  created_by: string;
+  @Column({ type: 'boolean', default: true })
+  is_active: boolean;
 
   @CreateDateColumn()
   created_at: Date;

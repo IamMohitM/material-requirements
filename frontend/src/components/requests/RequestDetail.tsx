@@ -18,24 +18,34 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      DRAFT: 'secondary',
-      PENDING_APPROVAL: 'warning',
-      APPROVED: 'success',
-      REJECTED: 'danger',
-      QUOTED: 'info',
-      PO_CREATED: 'primary',
+      draft: 'secondary',
+      submitted: 'warning',
+      approved: 'success',
+      rejected: 'danger',
+      converted_to_po: 'primary',
+      cancelled: 'dark',
     };
     return (
       <Badge bg={variants[status] || 'secondary'}>
-        {status.replace(/_/g, ' ')}
+        {status.replace(/_/g, ' ').toUpperCase()}
       </Badge>
     );
   };
 
-  const total = request.line_items.reduce(
-    (sum, item) => sum + item.quantity * item.unit_price,
-    0
-  );
+  const getApprovalStatusBadge = (status?: string) => {
+    if (!status) return null;
+    const variants: Record<string, string> = {
+      pending: 'warning',
+      approved: 'success',
+      rejected: 'danger',
+      archived: 'secondary',
+    };
+    return (
+      <Badge bg={variants[status] || 'secondary'}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
 
   return (
     <div>
@@ -51,70 +61,56 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
         <Card.Body>
           <div className="row mb-4">
             <div className="col-md-3">
-              <strong>Status</strong>
+              <strong>Request Status</strong>
               <p>{getStatusBadge(request.status)}</p>
             </div>
             <div className="col-md-3">
-              <strong>Requester</strong>
-              <p>{request.requester_name}</p>
+              <strong>Approval Status</strong>
+              <p>{getApprovalStatusBadge(request.approval_status)}</p>
+            </div>
+            <div className="col-md-3">
+              <strong>Project</strong>
+              <p>{request.project_id}</p>
             </div>
             <div className="col-md-3">
               <strong>Created</strong>
               <p>{new Date(request.created_at).toLocaleDateString()}</p>
             </div>
-            <div className="col-md-3">
-              <strong>Delivery Date</strong>
-              <p>
-                {request.delivery_date
-                  ? new Date(request.delivery_date).toLocaleDateString()
-                  : '-'}
-              </p>
-            </div>
           </div>
 
-          {request.approval_comments && (
+          {request.approval_notes && (
             <Alert variant="info">
-              <strong>Approval Comments:</strong> {request.approval_comments}
+              <strong>Notes:</strong> {request.approval_notes}
             </Alert>
           )}
 
-          <h5 className="mt-4 mb-3">Line Items</h5>
+          <h5 className="mt-4 mb-3">Materials</h5>
           <Table bordered size="sm">
             <thead>
               <tr>
-                <th>Material</th>
+                <th>Material ID</th>
                 <th style={{ textAlign: 'right' }}>Quantity</th>
-                <th style={{ textAlign: 'right' }}>Unit Price</th>
-                <th style={{ textAlign: 'right' }}>Total</th>
               </tr>
             </thead>
             <tbody>
-              {request.line_items.map((item, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <strong>{item.material_name}</strong>
-                    <br />
-                    <small className="text-muted">{item.material_id}</small>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>{item.quantity}</td>
-                  <td style={{ textAlign: 'right' }}>${item.unit_price.toFixed(2)}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    ${(item.quantity * item.unit_price).toFixed(2)}
+              {request.materials && request.materials.length > 0 ? (
+                request.materials.map((item, idx) => (
+                  <tr key={idx}>
+                    <td>{item.material_id}</td>
+                    <td style={{ textAlign: 'right' }}>{item.quantity}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={2} style={{ textAlign: 'center' }}>
+                    No materials added
                   </td>
                 </tr>
-              ))}
-              <tr>
-                <td colSpan={3} style={{ textAlign: 'right' }}>
-                  <strong>Total:</strong>
-                </td>
-                <td style={{ textAlign: 'right' }}>
-                  <strong>${total.toFixed(2)}</strong>
-                </td>
-              </tr>
+              )}
             </tbody>
           </Table>
 
-          {request.status === 'PENDING_APPROVAL' && (
+          {request.status === 'submitted' && (
             <div className="mt-4">
               <Button
                 variant="success"

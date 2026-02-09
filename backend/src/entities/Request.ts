@@ -8,26 +8,21 @@ import {
 } from 'typeorm';
 import { RequestStatus } from '../types/index';
 
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'archived';
+
 @Entity('requests')
 @Index(['project_id'])
 @Index(['status'])
-@Index(['requester_id'])
 @Index(['created_at'])
 export class Request {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
-  project_id: string;
-
-  @Column({ type: 'uuid' })
-  requester_id: string;
-
   @Column({ type: 'varchar', length: 100, unique: true })
   request_number: string;
 
-  @Column({ type: 'text' })
-  description: string;
+  @Column({ type: 'uuid' })
+  project_id: string;
 
   @Column({
     type: 'enum',
@@ -36,24 +31,38 @@ export class Request {
   })
   status: RequestStatus;
 
-  @Column({ type: 'date' })
-  requested_date: Date;
-
-  @Column({ type: 'date' })
-  required_delivery_date: Date;
-
-  @Column({ type: 'jsonb' })
-  line_items: Array<{
+  @Column({ type: 'jsonb', default: '[]' })
+  materials: Array<{
     material_id: string;
     quantity: number;
-    unit_price_estimate?: number;
   }>;
 
-  @Column({ type: 'text', nullable: true })
-  comments?: string;
+  @Column({ type: 'uuid', nullable: true })
+  submitted_by_id?: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  approval_chain?: Record<string, unknown>;
+  @Column({ type: 'timestamp', nullable: true })
+  submitted_at?: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  reviewed_by_id?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  reviewed_at?: Date;
+
+  @Column({ type: 'uuid', nullable: true })
+  approved_by_id?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  approved_at?: Date;
+
+  @Column({ type: 'varchar', length: 50, nullable: true, default: 'pending' })
+  approval_status?: ApprovalStatus;
+
+  @Column({ type: 'text', nullable: true })
+  approval_notes?: string;
+
+  @Column({ type: 'boolean', default: true })
+  is_active: boolean;
 
   @CreateDateColumn()
   created_at: Date;

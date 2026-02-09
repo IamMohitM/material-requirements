@@ -1,3 +1,76 @@
+# Development Session Log - Bug Fixes & Frontend Enhancement
+
+## 2026-02-08 14:30 - Software Engineer
+
+**Phase:** Frontend Feature Implementation - Search/Create-on-the-Fly
+
+**Status:** In Progress → Completed
+
+### Objective
+Implement search and create-on-the-fly capability for the frontend Request form, allowing users to:
+1. Search for existing projects and materials by typing
+2. Create new projects/materials inline (admin only)
+3. Remove unit_price from material line items (quantity-only approach)
+
+### Key Decisions Made
+- **SearchableSelect Component:** Created reusable dropdown with live search, keyboard navigation, and admin-controlled creation
+- **Role-Based Access:** Only admins can create new projects/materials; others can search and select
+- **Quantity-Only Approach:** Removed unit_price from materials - only quantity tracked at request stage
+- **Redux State Management:** Separate slices for projects and materials with async thunks
+
+### Artifacts Created
+**New Files (7):**
+- `frontend/src/services/projectsApi.ts` - Projects API service
+- `frontend/src/services/materialsApi.ts` - Materials API service
+- `frontend/src/store/slices/projectsSlice.ts` - Redux state
+- `frontend/src/store/slices/materialsSlice.ts` - Redux state
+- `frontend/src/components/common/SearchableSelect.tsx` - Reusable search component
+- `frontend/src/components/common/SearchableSelect.css` - Component styling
+- `frontend/src/components/common/CreateItemModal.tsx` - Modal for creating items
+
+**Modified Files (2):**
+- `frontend/src/components/requests/RequestForm.tsx` - Enhanced with search/create features
+- `frontend/src/store/store.ts` - Added new reducers
+
+### Features Implemented
+✅ SearchableSelect component with:
+  - Type-to-search filtering
+  - Keyboard navigation (↑↓ Enter Escape)
+  - Auto-close on outside click
+  - Loading spinner
+  - Optional "Create New" for admins
+
+✅ Inline item creation:
+  - Projects can be created from request form (admin only)
+  - Materials can be created from request form (admin only)
+  - New items auto-selected after creation
+
+✅ API Integration:
+  - Projects: list, search, create, get-by-id
+  - Materials: list, search, create, get-by-id
+  - Auto auth token injection
+  - Error handling
+
+✅ Redux state:
+  - Async thunks for all operations
+  - Pagination support (100 items/page)
+  - Error and loading states
+
+### Test Status
+✅ Frontend compiles successfully (0 errors, 0 warnings)
+✅ TypeScript strict mode compliance
+✅ Redux store properly configured
+✅ All components render without errors
+✅ Build size acceptable
+
+### Next Steps
+- End-to-end test with backend API
+- Verify backend Materials and Projects endpoints exist
+- Test search performance with large datasets
+- Mobile device testing
+
+---
+
 # Tier 2 Implementation Log - Delivery Tracking & Invoice Matching
 
 ## 2026-02-07 14:10 - Software Product Manager

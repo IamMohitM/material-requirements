@@ -6,9 +6,8 @@ import { UserRole, ProjectStatus } from '../types/index';
 
 async function seed() {
   try {
-    if (!AppDataSource.isInitialized) {
-      await AppDataSource.initialize();
-    }
+    // Create a fresh connection for seeding
+    const seedConnection = AppDataSource.isInitialized ? AppDataSource : await AppDataSource.initialize();
 
     const userRepository = AppDataSource.getRepository(User);
     const projectRepository = AppDataSource.getRepository(Project);
@@ -69,6 +68,93 @@ async function seed() {
     // Demo users created successfully!
     console.log('✓ Demo users created successfully!')
     console.log('\nYou can now use these credentials to login to the frontend at http://localhost:3001\n');
+
+    // Create demo projects
+    console.log('\n📦 CREATING DEMO PROJECTS');
+    console.log('═══════════════════════════════════════════════════════════');
+
+    const demoProjects = [
+      {
+        name: 'Downtown Plaza',
+        description: 'Modern commercial development in downtown area',
+        start_date: new Date('2026-01-15'),
+        end_date: new Date('2026-12-31'),
+        budget: 500000,
+        status: ProjectStatus.ACTIVE,
+      },
+      {
+        name: 'Riverside Apartments',
+        description: 'Residential apartment complex near river',
+        start_date: new Date('2026-02-01'),
+        end_date: new Date('2027-06-30'),
+        budget: 750000,
+        status: ProjectStatus.PLANNING,
+      },
+      {
+        name: 'Tech Park Office',
+        description: 'Corporate office building',
+        start_date: new Date('2026-03-01'),
+        end_date: new Date('2027-03-31'),
+        budget: 1000000,
+        status: ProjectStatus.PLANNING,
+      },
+    ];
+
+    for (const projectData of demoProjects) {
+      const project = projectRepository.create({
+        id: generateId(),
+        ...projectData,
+        created_by_id: (await userRepository.findOne({ where: { email: 'admin@demo.com' } }))?.id || '',
+        is_active: true,
+      });
+      await projectRepository.save(project);
+      console.log(`✓ ${projectData.name}`);
+    }
+
+    // Create demo materials
+    console.log('\n🔨 CREATING DEMO MATERIALS');
+    console.log('═══════════════════════════════════════════════════════════');
+
+    const demoMaterials = [
+      {
+        material_code: 'MAT-CEMENT-001',
+        name: 'Portland Cement 50kg',
+        unit: 'bag',
+        category: 'Concrete Materials',
+        description: 'Standard Portland cement for concrete work',
+      },
+      {
+        material_code: 'MAT-STEEL-001',
+        name: 'Steel Rebar 16mm',
+        unit: 'kg',
+        category: 'Steel',
+        description: 'High strength steel reinforcement bars',
+      },
+      {
+        material_code: 'MAT-SAND-001',
+        name: 'Construction Sand',
+        unit: 'cubic_meter',
+        category: 'Aggregates',
+        description: 'Fine sand for concrete and mortar',
+      },
+      {
+        material_code: 'MAT-BRICK-001',
+        name: 'Red Bricks',
+        unit: 'piece',
+        category: 'Masonry',
+        description: 'Standard red clay bricks',
+      },
+    ];
+
+    for (const materialData of demoMaterials) {
+      const material = materialRepository.create({
+        id: generateId(),
+        ...materialData,
+        is_active: true,
+      });
+      await materialRepository.save(material);
+      console.log(`✓ ${materialData.name}`);
+    }
 
     console.log('\n✓ Database seeding completed successfully');
     process.exit(0);

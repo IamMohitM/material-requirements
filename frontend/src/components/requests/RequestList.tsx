@@ -25,16 +25,16 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      DRAFT: 'secondary',
-      PENDING_APPROVAL: 'warning',
-      APPROVED: 'success',
-      REJECTED: 'danger',
-      QUOTED: 'info',
-      PO_CREATED: 'primary',
+      draft: 'secondary',
+      submitted: 'warning',
+      approved: 'success',
+      rejected: 'danger',
+      converted_to_po: 'primary',
+      cancelled: 'dark',
     };
     return (
       <Badge bg={variants[status] || 'secondary'}>
-        {status.replace(/_/g, ' ')}
+        {status.replace(/_/g, ' ').toUpperCase()}
       </Badge>
     );
   };
@@ -96,12 +96,12 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
                   }
                 >
                   <option value="">All Statuses</option>
-                  <option value="DRAFT">Draft</option>
-                  <option value="PENDING_APPROVAL">Pending Approval</option>
-                  <option value="APPROVED">Approved</option>
-                  <option value="REJECTED">Rejected</option>
-                  <option value="QUOTED">Quoted</option>
-                  <option value="PO_CREATED">PO Created</option>
+                  <option value="draft">Draft</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="converted_to_po">Converted to PO</option>
+                  <option value="cancelled">Cancelled</option>
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -161,30 +161,35 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
               <thead>
                 <tr>
                   <th>Request #</th>
-                  <th>Requester</th>
-                  <th>Items</th>
+                  <th>Project</th>
+                  <th>Materials</th>
                   <th>Status</th>
-                  <th>Delivery Date</th>
+                  <th>Approval Status</th>
                   <th>Created</th>
                 </tr>
               </thead>
               <tbody>
-                {list.map((request) => (
-                  <tr key={request.id} onClick={() => onRowClick(request)} style={{ cursor: 'pointer' }}>
-                    <td>
-                      <strong>{request.request_number}</strong>
-                    </td>
-                    <td>{request.requester_name}</td>
-                    <td>{request.line_items.length}</td>
-                    <td>{getStatusBadge(request.status)}</td>
-                    <td>
-                      {request.delivery_date
-                        ? new Date(request.delivery_date).toLocaleDateString()
-                        : '-'}
-                    </td>
-                    <td>{new Date(request.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
+                {list.map((request) => {
+                  // Handle cases where materials might be undefined
+                  const materialsCount = Array.isArray(request.materials) ? request.materials.length : 0;
+
+                  return (
+                    <tr key={request.id} onClick={() => onRowClick(request)} style={{ cursor: 'pointer' }}>
+                      <td>
+                        <strong>{request.request_number}</strong>
+                      </td>
+                      <td>{request.project_id}</td>
+                      <td>{materialsCount}</td>
+                      <td>{getStatusBadge(request.status)}</td>
+                      <td>
+                        <Badge bg={request.approval_status === 'approved' ? 'success' : request.approval_status === 'rejected' ? 'danger' : 'warning'}>
+                          {request.approval_status || 'pending'}
+                        </Badge>
+                      </td>
+                      <td>{new Date(request.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </Card>

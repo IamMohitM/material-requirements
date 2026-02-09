@@ -7,8 +7,7 @@ import {
   getPaginationParams,
   calculateTotalPages,
 } from '@utils/helpers';
-import { RequestStatus, IRequest, LineItem, PaginatedResponse } from '../types/index';
-import { In } from 'typeorm';
+import { RequestStatus, PaginatedResponse } from '../types/index';
 
 export class RequestService {
   /**
@@ -18,29 +17,24 @@ export class RequestService {
     return AppDataSource.getRepository(Request);
   }
 
-
-  
-
   /**
    * Create a new material request
    */
   async createRequest(
     projectId: string,
-    requesterId: string,
-    description: string,
-    requiredDeliveryDate: Date,
-    lineItems: LineItem[],
-    comments?: string
+    submittedById: string,
+    materials: Array<{ material_id: string; quantity: number }>,
+    approvalNotes?: string
   ): Promise<Request> {
-    // Validate line items
-    if (!lineItems || lineItems.length === 0) {
-      throw new ValidationError('At least one line item is required');
+    // Validate materials
+    if (!materials || materials.length === 0) {
+      throw new ValidationError('At least one material is required');
     }
 
-    for (const item of lineItems) {
+    for (const item of materials) {
       if (!item.material_id || item.quantity <= 0) {
         throw new ValidationError(
-          'Each line item must have material_id and positive quantity'
+          'Each material must have material_id and positive quantity'
         );
       }
     }
@@ -48,14 +42,14 @@ export class RequestService {
     const request = this.getRequestRepository().create({
       id: generateId(),
       project_id: projectId,
-      requester_id: requesterId,
       request_number: generateRequestNumber(),
-      description,
-      requested_date: new Date(),
-      required_delivery_date: requiredDeliveryDate,
-      line_items: lineItems,
-      comments,
-      status: RequestStatus.DRAFT,
+      materials,
+      submitted_by_id: submittedById,
+      submitted_at: new Date(),
+      approval_status: 'pending',
+      approval_notes: approvalNotes,
+      status: RequestStatus.SUBMITTED,
+      is_active: true,
     });
 
     await this.getRequestRepository().save(request);
@@ -83,14 +77,14 @@ export class RequestService {
   async getRequests(options: {
     projectId?: string;
     status?: RequestStatus;
-    requesterId?: string;
+    submittedById?: string;
     page?: number;
     pageSize?: number;
   }): Promise<PaginatedResponse<Request>> {
     const {
       projectId,
       status,
-      requesterId,
+      submittedById,
       page = 1,
       pageSize = 20,
     } = options;
@@ -107,8 +101,8 @@ export class RequestService {
       query.andWhere('request.status = :status', { status });
     }
 
-    if (requesterId) {
-      query.andWhere('request.requester_id = :requesterId', { requesterId });
+    if (submittedById) {
+      query.andWhere('request.submitted_by_id = :submittedById', { submittedById });
     }
 
     const [items, total] = await query
@@ -127,16 +121,11 @@ export class RequestService {
   }
 
   /**
-   * Update request (only in draft status)
+   * Update request materials (only in draft status)
    */
   async updateRequest(
     id: string,
-    updates: {
-      description?: string;
-      requiredDeliveryDate?: Date;
-      lineItems?: LineItem[];
-      comments?: string;
-    }
+    materials: Array<{ material_id: string; quantity: number }>
   ): Promise<Request> {
     const request = await this.getRequestById(id);
 
@@ -146,24 +135,19 @@ export class RequestService {
       );
     }
 
-    if (updates.description) {
-      request.description = updates.description;
+    if (!materials || materials.length === 0) {
+      throw new ValidationError('At least one material is required');
     }
 
-    if (updates.requiredDeliveryDate) {
-      request.required_delivery_date = updates.requiredDeliveryDate;
-    }
-
-    if (updates.lineItems) {
-      if (updates.lineItems.length === 0) {
-        throw new ValidationError('At least one line item is required');
+    for (const item of materials) {
+      if (!item.material_id || item.quantity <= 0) {
+        throw new ValidationError(
+          'Each material must have material_id and positive quantity'
+        );
       }
-      request.line_items = updates.lineItems;
     }
 
-    if (updates.comments) {
-      request.comments = updates.comments;
-    }
+    request.materials = materials;
 
     await this.getRequestRepository().save(request);
     return request;
@@ -172,7 +156,7 @@ export class RequestService {
   /**
    * Submit request for approval
    */
-  async submitRequest(id: string): Promise<Request> {
+  async submitRequest(id: string, submittedById: string): Promise<Request> {
     const request = await this.getRequestById(id);
 
     if (request.status !== RequestStatus.DRAFT) {
@@ -182,7 +166,9 @@ export class RequestService {
     }
 
     request.status = RequestStatus.SUBMITTED;
-    request.requested_date = new Date();
+    request.submitted_by_id = submittedById;
+    request.submitted_at = new Date();
+    request.approval_status = 'pending';
 
     await this.getRequestRepository().save(request);
     return request;
@@ -194,7 +180,7 @@ export class RequestService {
   async approveRequest(
     id: string,
     approverId: string,
-    comments?: string
+    notes?: string
   ): Promise<Request> {
     const request = await this.getRequestById(id);
 
@@ -205,11 +191,10 @@ export class RequestService {
     }
 
     request.status = RequestStatus.APPROVED;
-    request.approval_chain = {
-      approved_by: approverId,
-      approved_at: new Date(),
-      comments,
-    };
+    request.approved_by_id = approverId;
+    request.approved_at = new Date();
+    request.approval_status = 'approved';
+    request.approval_notes = notes;
 
     await this.getRequestRepository().save(request);
     return request;
@@ -220,7 +205,7 @@ export class RequestService {
    */
   async rejectRequest(
     id: string,
-    rejectorId: string,
+    reviewerId: string,
     reason: string
   ): Promise<Request> {
     const request = await this.getRequestById(id);
@@ -232,89 +217,95 @@ export class RequestService {
     }
 
     request.status = RequestStatus.REJECTED;
-    request.approval_chain = {
-      rejected_by: rejectorId,
-      rejected_at: new Date(),
-      reason,
-    };
+    request.reviewed_by_id = reviewerId;
+    request.reviewed_at = new Date();
+    request.approval_status = 'rejected';
+    request.approval_notes = reason;
 
     await this.getRequestRepository().save(request);
     return request;
   }
 
   /**
-   * Convert request to PO
-   */
-  async convertToPO(id: string): Promise<Request> {
-    const request = await this.getRequestById(id);
-
-    if (request.status !== RequestStatus.APPROVED) {
-      throw new BadRequestError(
-        'Can only convert APPROVED requests to PO'
-      );
-    }
-
-    request.status = RequestStatus.CONVERTED_TO_PO;
-
-    await this.getRequestRepository().save(request);
-    return request;
-  }
-
-  /**
-   * Delete request (only in draft status)
+   * Delete a request (soft delete via is_active flag)
    */
   async deleteRequest(id: string): Promise<void> {
     const request = await this.getRequestById(id);
 
     if (request.status !== RequestStatus.DRAFT) {
-      throw new BadRequestError(
-        'Can only delete requests in DRAFT status'
-      );
+      throw new BadRequestError('Can only delete requests in DRAFT status');
     }
 
-    await this.getRequestRepository().remove(request);
+    request.is_active = false;
+    await this.getRequestRepository().save(request);
+  }
+
+  /**
+   * Convert approved request to purchase order
+   */
+  async convertToPO(id: string): Promise<Request> {
+    const request = await this.getRequestById(id);
+
+    if (request.status !== RequestStatus.APPROVED) {
+      throw new BadRequestError('Can only convert APPROVED requests to PO');
+    }
+
+    request.status = RequestStatus.CONVERTED_TO_PO;
+    await this.getRequestRepository().save(request);
+    return request;
   }
 
   /**
    * Get requests by project
    */
-  async getProjectRequests(
-    projectId: string,
-    page: number = 1,
-    pageSize: number = 20
-  ): Promise<PaginatedResponse<Request>> {
+  async getRequestsByProject(projectId: string, page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
     return this.getRequests({ projectId, page, pageSize });
   }
 
   /**
-   * Count requests by status
+   * Get requests for a specific project (alias for getRequestsByProject)
    */
-  async countRequestsByStatus(
-    projectId: string
-  ): Promise<Record<RequestStatus, number>> {
-    const counts = await this.getRequestRepository()
-      .createQueryBuilder('request')
-      .where('request.project_id = :projectId', { projectId })
-      .groupBy('request.status')
-      .select('request.status', 'status')
-      .addSelect('COUNT(*)', 'count')
-      .getRawMany();
+  async getProjectRequests(projectId: string, page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
+    return this.getRequests({ projectId, page, pageSize });
+  }
 
-    const result: Record<RequestStatus, number> = {
-      [RequestStatus.DRAFT]: 0,
-      [RequestStatus.SUBMITTED]: 0,
-      [RequestStatus.APPROVED]: 0,
-      [RequestStatus.REJECTED]: 0,
-      [RequestStatus.CONVERTED_TO_PO]: 0,
-      [RequestStatus.CANCELLED]: 0,
+  /**
+   * Get requests for approval
+   */
+  async getPendingRequests(page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
+    return this.getRequests({ status: RequestStatus.SUBMITTED, page, pageSize });
+  }
+
+  /**
+   * Search requests
+   */
+  async searchRequests(
+    query: string,
+    page = 1,
+    pageSize = 20
+  ): Promise<PaginatedResponse<Request>> {
+    const { offset, limit } = getPaginationParams(page, pageSize);
+
+    const qb = this.getRequestRepository().createQueryBuilder('request');
+
+    qb.where('request.request_number ILIKE :query', { query: `%${query}%` })
+      .orWhere('request.approval_notes ILIKE :query', { query: `%${query}%` });
+
+    const [items, total] = await qb
+      .orderBy('request.created_at', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      page_size: pageSize,
+      total_pages: calculateTotalPages(total, pageSize),
     };
-
-    counts.forEach((count) => {
-      result[count.status as RequestStatus] = parseInt(count.count);
-    });
-
-    return result;
   }
 }
 
+// Export singleton instance
 export default new RequestService();

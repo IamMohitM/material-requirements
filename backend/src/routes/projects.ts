@@ -17,11 +17,11 @@ router.get(
   requireAuth,
   validateQuery(paginationSchema),
   asyncHandler(async (req, res) => {
-    const { page, page_size, status, owner_id } = req.query;
+    const { page, page_size, status, created_by_id } = req.query;
 
     const result = await projectService.getProjects({
       status: status as any | undefined,
-      owner_id: owner_id as string | undefined,
+      created_by_id: created_by_id as string | undefined,
       page: parseInt(page as string) || 1,
       pageSize: parseInt(page_size as string) || 20,
     });
@@ -52,17 +52,16 @@ router.post(
   requireRole(UserRole.ADMIN, UserRole.APPROVER),
   validateBody(createProjectSchema),
   asyncHandler(async (req, res) => {
-    const { name, location, budget, start_date, end_date, description } = req.body;
+    const { name, budget, start_date, end_date, description, status } = req.body;
 
     const project = await projectService.createProject(
       name,
-      location,
       budget,
-      'company-id', // TODO: Get from user or request
       req.user!.id,
       start_date ? new Date(start_date) : undefined,
       end_date ? new Date(end_date) : undefined,
-      description
+      description,
+      status
     );
 
     const response: ApiResponse = {
@@ -105,14 +104,14 @@ router.put(
   requireRole(UserRole.ADMIN, UserRole.APPROVER),
   validateBody(updateProjectSchema),
   asyncHandler(async (req, res) => {
-    const { name, location, budget, status, end_date } = req.body;
+    const { name, budget, status, end_date, description } = req.body;
 
     const project = await projectService.updateProject(req.params.id, {
       name,
-      location,
       budget,
       status,
       end_date: end_date ? new Date(end_date) : undefined,
+      description,
     });
 
     const response: ApiResponse = {

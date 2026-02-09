@@ -15,23 +15,23 @@ export class Material {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 50, unique: true })
+  material_code: string;
+
+  @Column({ type: 'varchar', length: 200 })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  unit_of_measure: string;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  unit?: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  category: string;
-
-  @Column({ type: 'integer', nullable: true })
-  min_stock?: number;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  category?: string;
 
   @Column({ type: 'numeric', precision: 15, scale: 2, nullable: true })
-  standard_cost?: number;
+  unit_price?: number;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;

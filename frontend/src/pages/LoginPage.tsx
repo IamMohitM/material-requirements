@@ -7,8 +7,8 @@ import { setUser, setTokens, setError } from '../store/slices/authSlice';
 import '../styles/LoginPage.css';
 
 function LoginPage() {
-  const [email, setEmail] = useState('admin@company.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('admin@demo.com');
+  const [password, setPassword] = useState('demo123456');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setErrorState] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -90,8 +90,8 @@ function LoginPage() {
             <div className="login-footer">
               <small>
                 Demo Credentials:<br />
-                Email: admin@company.com<br />
-                Password: password123
+                Email: admin@demo.com<br />
+                Password: demo123456
               </small>
             </div>
           </Card.Body>

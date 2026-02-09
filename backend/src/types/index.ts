@@ -30,12 +30,12 @@ export interface IProject {
 
 export interface IMaterial {
   id: string;
+  material_code: string;
   name: string;
-  description: string;
-  unit_of_measure: string;
-  category: string;
-  min_stock?: number;
-  standard_cost?: number;
+  description?: string;
+  unit?: string;
+  category?: string;
+  unit_price?: number;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

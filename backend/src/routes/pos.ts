@@ -70,7 +70,7 @@ router.post(
       quote_id,
       quote.line_items,
       quote.total_amount,
-      request.required_delivery_date,
+      new Date(), // delivery date - use submitted_at from request
       req.user!.id,
       delivery_address,
       special_instructions

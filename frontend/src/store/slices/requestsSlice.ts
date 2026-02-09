@@ -1,26 +1,26 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { requestsApi } from '../../services/requestsApi';
 
-export interface RequestLineItem {
+export interface Material {
   material_id: string;
-  material_name: string;
   quantity: number;
-  unit_price: number;
-  description?: string;
 }
 
 export interface Request {
   id: string;
   project_id: string;
-  requester_id: string;
-  requester_name: string;
   request_number: string;
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'QUOTED' | 'PO_CREATED';
-  line_items: RequestLineItem[];
-  priority?: string;
-  delivery_date?: string;
-  approved_by?: string;
-  approval_comments?: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'converted_to_po' | 'cancelled';
+  materials: Material[];
+  submitted_by_id?: string;
+  submitted_at?: string;
+  reviewed_by_id?: string;
+  reviewed_at?: string;
+  approved_by_id?: string;
+  approved_at?: string;
+  approval_status?: 'pending' | 'approved' | 'rejected' | 'archived';
+  approval_notes?: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -94,20 +94,25 @@ export const fetchRequestDetail = createAsyncThunk(
 export const createRequest = createAsyncThunk(
   'requests/create',
   async (
-    data: Omit<Request, 'id' | 'request_number' | 'created_at' | 'updated_at' | 'status'>,
+    data: {
+      project_id: string;
+      materials: Material[];
+      approval_notes?: string;
+    },
     { rejectWithValue }
   ) => {
     try {
       return await requestsApi.createRequest(data);
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to create request');
+      const errorMsg = error.response?.data?.error?.message || error.message || 'Failed to create request';
+      return rejectWithValue(errorMsg);
     }
   }
 );
 
 export const updateRequest = createAsyncThunk(
   'requests/update',
-  async ({ id, data }: { id: string; data: Partial<Request> }, { rejectWithValue }) => {
+  async ({ id, data }: { id: string; data: { materials: Material[] } }, { rejectWithValue }) => {
     try {
       return await requestsApi.updateRequest(id, data);
     } catch (error: any) {
@@ -120,7 +125,7 @@ export const approveRequest = createAsyncThunk(
   'requests/approve',
   async ({ id, comments }: { id: string; comments?: string }, { rejectWithValue }) => {
     try {
-      return await requestsApi.approveRequest(id, { approval_comments: comments });
+      return await requestsApi.approveRequest(id, { comments });
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to approve request');
     }
@@ -129,9 +134,9 @@ export const approveRequest = createAsyncThunk(
 
 export const rejectRequest = createAsyncThunk(
   'requests/reject',
-  async ({ id, comments }: { id: string; comments?: string }, { rejectWithValue }) => {
+  async ({ id, reason }: { id: string; reason?: string }, { rejectWithValue }) => {
     try {
-      return await requestsApi.rejectRequest(id, { approval_comments: comments });
+      return await requestsApi.rejectRequest(id, { reason });
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to reject request');
     }

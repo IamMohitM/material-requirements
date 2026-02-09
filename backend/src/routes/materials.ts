@@ -52,12 +52,12 @@ router.post(
   requireRole(UserRole.ADMIN, UserRole.FINANCE_OFFICER),
   validateBody(createMaterialSchema),
   asyncHandler(async (req, res) => {
-    const { name, category, unit_of_measure, description } = req.body;
+    const { name, category, unit, description } = req.body;
 
     const material = await materialService.createMaterial(
       name,
       category,
-      unit_of_measure,
+      unit,
       description
     );
 
@@ -101,12 +101,12 @@ router.put(
   requireRole(UserRole.ADMIN, UserRole.FINANCE_OFFICER),
   validateBody(updateMaterialSchema),
   asyncHandler(async (req, res) => {
-    const { name, category, unit_of_measure, description, is_active } = req.body;
+    const { name, category, unit, description, is_active } = req.body;
 
     const material = await materialService.updateMaterial(req.params.id, {
       name,
       category,
-      unit_of_measure,
+      unit,
       description,
       is_active,
     });

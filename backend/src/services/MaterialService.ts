@@ -25,20 +25,22 @@ export class MaterialService {
   async createMaterial(
     name: string,
     category: string,
-    unit_of_measure: string,
+    unit: string,
     description?: string
   ): Promise<Material> {
-    if (!name || !unit_of_measure) {
-      throw new ValidationError(
-        'Material name and unit of measure are required'
-      );
+    if (!name) {
+      throw new ValidationError('Material name is required');
     }
+
+    // Generate a unique material code
+    const material_code = `MAT-${generateId().substring(0, 8).toUpperCase()}`;
 
     const material = this.getMaterialRepository().create({
       id: generateId(),
+      material_code,
       name,
       category,
-      unit_of_measure,
+      unit,
       description,
       is_active: true,
     });
@@ -120,7 +122,7 @@ export class MaterialService {
     updates: {
       name?: string;
       category?: string;
-      unit_of_measure?: string;
+      unit?: string;
       description?: string;
       is_active?: boolean;
     }
@@ -129,7 +131,7 @@ export class MaterialService {
 
     if (updates.name) material.name = updates.name;
     if (updates.category) material.category = updates.category;
-    if (updates.unit_of_measure) material.unit_of_measure = updates.unit_of_measure;
+    if (updates.unit) material.unit = updates.unit;
     if (updates.description) material.description = updates.description;
     if (updates.is_active !== undefined) material.is_active = updates.is_active;
 

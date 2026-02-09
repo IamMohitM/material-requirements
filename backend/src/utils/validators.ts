@@ -18,9 +18,8 @@ export const loginSchema = Joi.object({
 
 // Projects
 export const createProjectSchema = Joi.object({
-  name: Joi.string().min(3).max(255).required(),
+  name: Joi.string().min(3).max(200).required(),
   description: Joi.string().max(1000).optional(),
-  location: Joi.string().max(500).required(),
   start_date: Joi.date().required(),
   end_date: Joi.date().min(Joi.ref('start_date')).optional(),
   budget: Joi.number().positive().required(),
@@ -30,7 +29,7 @@ export const createProjectSchema = Joi.object({
 });
 
 export const updateProjectSchema = createProjectSchema.fork(
-  ['name', 'location', 'start_date', 'budget'],
+  ['name', 'start_date', 'budget'],
   (schema) => schema.optional()
 );
 
@@ -38,7 +37,7 @@ export const updateProjectSchema = createProjectSchema.fork(
 export const createMaterialSchema = Joi.object({
   name: Joi.string().min(3).max(255).required(),
   description: Joi.string().max(1000).optional(),
-  unit_of_measure: Joi.string().max(50).required(),
+  unit: Joi.string().max(50).required(),
   category: Joi.string().max(100).required(),
   min_stock: Joi.number().integer().positive().optional(),
   standard_cost: Joi.number().positive().optional(),
@@ -46,7 +45,7 @@ export const createMaterialSchema = Joi.object({
 });
 
 export const updateMaterialSchema = createMaterialSchema.fork(
-  ['name', 'unit_of_measure', 'category'],
+  ['name', 'unit', 'category'],
   (schema) => schema.optional()
 );
 
@@ -77,33 +76,35 @@ export const updateVendorSchema = createVendorSchema.fork(
 // Material Requests
 export const createRequestSchema = Joi.object({
   project_id: Joi.string().uuid().required(),
-  description: Joi.string().max(1000).required(),
-  required_delivery_date: Joi.date().required(),
-  line_items: Joi.array()
+  materials: Joi.array()
     .items(
       Joi.object({
         material_id: Joi.string().uuid().required(),
         quantity: Joi.number().positive().required(),
-        unit_price_estimate: Joi.number().positive().optional(),
       })
     )
     .min(1)
     .required(),
-  comments: Joi.string().max(1000).optional(),
+  approval_notes: Joi.string().max(1000).optional(),
 });
 
-export const updateRequestSchema = createRequestSchema.fork(
-  ['project_id', 'description', 'required_delivery_date', 'line_items'],
-  (schema) => schema.optional()
-);
+export const updateRequestSchema = Joi.object({
+  materials: Joi.array()
+    .items(
+      Joi.object({
+        material_id: Joi.string().uuid().required(),
+        quantity: Joi.number().positive().required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
 
 export const approveRequestSchema = Joi.object({
-  approver_id: Joi.string().uuid().required(),
   comments: Joi.string().max(500).optional(),
 });
 
 export const rejectRequestSchema = Joi.object({
-  rejector_id: Joi.string().uuid().required(),
   reason: Joi.string().max(500).required(),
 });
 

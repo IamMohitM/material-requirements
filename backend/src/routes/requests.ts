@@ -17,12 +17,12 @@ router.get(
   requireAuth,
   validateQuery(paginationSchema),
   asyncHandler(async (req, res) => {
-    const { page, page_size, project_id, status, requester_id } = req.query;
+    const { page, page_size, project_id, status, submitted_by_id } = req.query;
 
     const result = await requestService.getRequests({
       projectId: project_id as string | undefined,
       status: status as any | undefined,
-      requesterId: requester_id as string | undefined,
+      submittedById: submitted_by_id as string | undefined,
       page: parseInt(page as string) || 1,
       pageSize: parseInt(page_size as string) || 20,
     });
@@ -53,21 +53,13 @@ router.post(
   requireRole(UserRole.SITE_ENGINEER, UserRole.APPROVER, UserRole.ADMIN),
   validateBody(createRequestSchema),
   asyncHandler(async (req, res) => {
-    const {
-      project_id,
-      description,
-      required_delivery_date,
-      line_items,
-      comments,
-    } = req.body;
+    const { project_id, materials, approval_notes } = req.body;
 
     const request = await requestService.createRequest(
       project_id,
       req.user!.id,
-      description,
-      new Date(required_delivery_date),
-      line_items,
-      comments
+      materials,
+      approval_notes
     );
 
     const response: ApiResponse = {
@@ -108,43 +100,13 @@ router.put(
   '/:id',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const {
-      description,
-      required_delivery_date,
-      line_items,
-      comments,
-    } = req.body;
+    const { materials } = req.body;
 
-    const request = await requestService.updateRequest(req.params.id, {
-      description,
-      requiredDeliveryDate: required_delivery_date ? new Date(required_delivery_date) : undefined,
-      lineItems: line_items,
-      comments,
-    });
+    const request = await requestService.updateRequest(req.params.id, materials);
 
     const response: ApiResponse = {
       success: true,
       data: request,
-      error: null,
-    };
-
-    res.json(response);
-  })
-);
-
-/**
- * DELETE /api/v1/requests/:id
- * Delete a request (draft only)
- */
-router.delete(
-  '/:id',
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    await requestService.deleteRequest(req.params.id);
-
-    const response: ApiResponse = {
-      success: true,
-      data: null,
       error: null,
     };
 
@@ -160,7 +122,7 @@ router.post(
   '/:id/submit',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const request = await requestService.submitRequest(req.params.id);
+    const request = await requestService.submitRequest(req.params.id, req.user!.id);
 
     const response: ApiResponse = {
       success: true,
@@ -227,27 +189,6 @@ router.post(
 );
 
 /**
- * POST /api/v1/requests/:id/convert-to-po
- * Convert approved request to PO
- */
-router.post(
-  '/:id/convert-to-po',
-  requireAuth,
-  requireRole(UserRole.APPROVER, UserRole.ADMIN),
-  asyncHandler(async (req, res) => {
-    const request = await requestService.convertToPO(req.params.id);
-
-    const response: ApiResponse = {
-      success: true,
-      data: request,
-      error: null,
-    };
-
-    res.json(response);
-  })
-);
-
-/**
  * GET /api/v1/projects/:projectId/requests
  * Get requests for a specific project
  */
@@ -257,7 +198,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const { page = '1', page_size = '20' } = req.query;
 
-    const result = await requestService.getProjectRequests(
+    const result = await requestService.getRequestsByProject(
       req.params.projectId,
       parseInt(page as string) || 1,
       parseInt(page_size as string) || 20

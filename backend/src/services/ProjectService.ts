@@ -1,4 +1,4 @@
-import { AppDataSource } from '@config/database';
+import { AppDataSource, withDatabaseConnection } from '@config/database';
 import { Project } from '@entities/Project';
 import { NotFoundError, ValidationError, BadRequestError } from '@utils/errors';
 import {
@@ -24,48 +24,49 @@ export class ProjectService {
    */
   async createProject(
     name: string,
-    location: string,
     budget: number,
-    company_id: string,
-    created_by: string,
+    created_by_id: string,
     start_date?: Date,
     end_date?: Date,
-    description?: string
+    description?: string,
+    status?: ProjectStatus
   ): Promise<Project> {
-    if (!name || budget <= 0) {
-      throw new ValidationError('Project name and budget are required');
-    }
+    return withDatabaseConnection(async () => {
+      if (!name || budget <= 0) {
+        throw new ValidationError('Project name and budget are required');
+      }
 
-    const project = this.getProjectRepository().create({
-      id: generateId(),
-      name,
-      location,
-      budget,
-      company_id,
-      created_by,
-      start_date: start_date || new Date(),
-      end_date,
-      status: ProjectStatus.PLANNING,
-      description,
+      const project = this.getProjectRepository().create({
+        name,
+        budget,
+        created_by_id,
+        start_date: start_date || new Date(),
+        end_date,
+        status: status || ProjectStatus.PLANNING,
+        description,
+        is_active: true,
+      });
+
+      await this.getProjectRepository().save(project);
+      return project;
     });
-
-    await this.getProjectRepository().save(project);
-    return project;
   }
 
   /**
    * Get project by ID
    */
   async getProjectById(id: string): Promise<Project> {
-    const project = await this.getProjectRepository().findOne({
-      where: { id },
+    return withDatabaseConnection(async () => {
+      const project = await this.getProjectRepository().findOne({
+        where: { id },
+      });
+
+      if (!project) {
+        throw new NotFoundError('Project', id);
+      }
+
+      return project;
     });
-
-    if (!project) {
-      throw new NotFoundError('Project', id);
-    }
-
-    return project;
   }
 
   /**
@@ -73,36 +74,40 @@ export class ProjectService {
    */
   async getProjects(options: {
     status?: ProjectStatus;
-    owner_id?: string;
+    created_by_id?: string;
     page?: number;
     pageSize?: number;
   }): Promise<PaginatedResponse<Project>> {
-    const { status, owner_id, page = 1, pageSize = 20 } = options;
-    const { offset, limit } = getPaginationParams(page, pageSize);
+    return withDatabaseConnection(async () => {
+      const { status, created_by_id, page = 1, pageSize = 20 } = options;
+      const { offset, limit } = getPaginationParams(page, pageSize);
 
-    const query = this.getProjectRepository().createQueryBuilder('project');
+      const query = this.getProjectRepository()
+        .createQueryBuilder('project')
+        .where('project.is_active = :isActive', { isActive: true });
 
-    if (status) {
-      query.andWhere('project.status = :status', { status });
-    }
+      if (status) {
+        query.andWhere('project.status = :status', { status });
+      }
 
-    if (owner_id) {
-      query.andWhere('project.owner_id = :owner_id', { owner_id });
-    }
+      if (created_by_id) {
+        query.andWhere('project.created_by_id = :created_by_id', { created_by_id });
+      }
 
-    const [items, total] = await query
-      .orderBy('project.created_at', 'DESC')
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
+      const [items, total] = await query
+        .orderBy('project.created_at', 'DESC')
+        .skip(offset)
+        .take(limit)
+        .getManyAndCount();
 
-    return {
-      items,
-      total,
-      page,
-      page_size: pageSize,
-      total_pages: calculateTotalPages(total, pageSize),
-    };
+      return {
+        items,
+        total,
+        page,
+        page_size: pageSize,
+        total_pages: calculateTotalPages(total, pageSize),
+      };
+    });
   }
 
   /**
@@ -112,31 +117,35 @@ export class ProjectService {
     id: string,
     updates: {
       name?: string;
-      location?: string;
       budget?: number;
       status?: ProjectStatus;
       end_date?: Date;
+      description?: string;
     }
   ): Promise<Project> {
-    const project = await this.getProjectById(id);
+    return withDatabaseConnection(async () => {
+      const project = await this.getProjectById(id);
 
-    if (updates.name) project.name = updates.name;
-    if (updates.location) project.location = updates.location;
-    if (updates.budget) project.budget = updates.budget;
-    if (updates.status) project.status = updates.status;
-    if (updates.end_date) project.end_date = updates.end_date;
+      if (updates.name) project.name = updates.name;
+      if (updates.budget) project.budget = updates.budget;
+      if (updates.status) project.status = updates.status;
+      if (updates.end_date) project.end_date = updates.end_date;
+      if (updates.description !== undefined) project.description = updates.description;
 
-    await this.getProjectRepository().save(project);
-    return project;
+      await this.getProjectRepository().save(project);
+      return project;
+    });
   }
 
   /**
    * Delete project (soft delete - pause project)
    */
   async deleteProject(id: string): Promise<void> {
-    const project = await this.getProjectById(id);
-    project.status = ProjectStatus.PAUSED;
-    await this.getProjectRepository().save(project);
+    return withDatabaseConnection(async () => {
+      const project = await this.getProjectById(id);
+      project.status = ProjectStatus.PAUSED;
+      await this.getProjectRepository().save(project);
+    });
   }
 }
 

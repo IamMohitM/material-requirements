@@ -6,6 +6,8 @@ import invoicesReducer from './slices/invoicesSlice';
 import discrepanciesReducer from './slices/discrepanciesSlice';
 import requestsReducer from './slices/requestsSlice';
 import vendorsReducer from './slices/vendorsSlice';
+import projectsReducer from './slices/projectsSlice';
+import materialsReducer from './slices/materialsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +18,8 @@ export const store = configureStore({
     discrepancies: discrepanciesReducer,
     requests: requestsReducer,
     vendors: vendorsReducer,
+    projects: projectsReducer,
+    materials: materialsReducer,
   },
 });
 

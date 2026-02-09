@@ -1,18 +1,14 @@
 import { api } from './api';
-import { Request, RequestFilters } from '../store/slices/requestsSlice';
+import { RequestFilters, Material } from '../store/slices/requestsSlice';
 
 export const requestsApi = {
   async listRequests(page: number = 1, pageSize: number = 20, filters?: RequestFilters) {
     const params = new URLSearchParams({
       page: page.toString(),
-      pageSize: pageSize.toString(),
+      page_size: pageSize.toString(),
       ...(filters?.status && { status: filters.status }),
-      ...(filters?.projectId && { projectId: filters.projectId }),
+      ...(filters?.projectId && { project_id: filters.projectId }),
       ...(filters?.searchTerm && { search: filters.searchTerm }),
-      ...(filters?.dateRange && {
-        dateFrom: filters.dateRange[0],
-        dateTo: filters.dateRange[1],
-      }),
     });
 
     const response = await api.get(`/api/v1/requests?${params.toString()}`);
@@ -27,34 +23,49 @@ export const requestsApi = {
     return response.data.data;
   },
 
-  async createRequest(data: Omit<Request, 'id' | 'request_number' | 'created_at' | 'updated_at' | 'status'>) {
+  async createRequest(data: {
+    project_id: string;
+    materials: Material[];
+    approval_notes?: string;
+  }) {
     const response = await api.post('/api/v1/requests', {
       project_id: data.project_id,
-      requester_id: data.requester_id,
-      requester_name: data.requester_name,
-      line_items: data.line_items,
-      priority: data.priority,
-      delivery_date: data.delivery_date,
+      materials: data.materials,
+      approval_notes: data.approval_notes,
     });
     return response.data.data;
   },
 
-  async updateRequest(id: string, data: Partial<Request>) {
+  async updateRequest(id: string, data: { materials: Material[] }) {
     const response = await api.put(`/api/v1/requests/${id}`, data);
     return response.data.data;
   },
 
-  async approveRequest(id: string, data: { approval_comments?: string }) {
-    const response = await api.post(`/api/v1/requests/${id}/approve`, data);
+  async submitRequest(id: string) {
+    const response = await api.post(`/api/v1/requests/${id}/submit`, {});
     return response.data.data;
   },
 
-  async rejectRequest(id: string, data: { approval_comments?: string }) {
-    const response = await api.post(`/api/v1/requests/${id}/reject`, data);
+  async approveRequest(id: string, data: { comments?: string }) {
+    const response = await api.post(`/api/v1/requests/${id}/approve`, {
+      comments: data.comments,
+    });
+    return response.data.data;
+  },
+
+  async rejectRequest(id: string, data: { reason?: string }) {
+    const response = await api.post(`/api/v1/requests/${id}/reject`, {
+      reason: data.reason,
+    });
     return response.data.data;
   },
 
   async deleteRequest(id: string) {
     await api.delete(`/api/v1/requests/${id}`);
+  },
+
+  async convertToPO(id: string) {
+    const response = await api.post(`/api/v1/requests/${id}/convert-to-po`, {});
+    return response.data.data;
   },
 };
