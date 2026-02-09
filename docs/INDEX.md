@@ -13,6 +13,7 @@ Welcome to the Material Requirements Management System documentation. Use this i
 1. Review [DEVELOPMENT.md](./DEVELOPMENT.md) - Development standards and patterns
 2. Check [DATABASE.md](./DATABASE.md) - Database schema reference
 3. Review [API.md](./API.md) - API endpoint documentation
+4. Check [SEED_DATA.md](./SEED_DATA.md) - Manage test data and seeding
 
 **Managing the project?**
 1. Read [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Phase breakdown and roadmap
@@ -169,6 +170,28 @@ Welcome to the Material Requirements Management System documentation. Use this i
 
 ---
 
+### [SEED_DATA.md](./SEED_DATA.md)
+**What:** Test data management and seeding guide
+**Who needs this:** Developers, QA, product managers
+**Contains:**
+- Quick start (running default seed data)
+- Default login credentials
+- How seed data works (idempotent, auto-retry, organized output)
+- Creating custom seed data (modifying seed script, creating custom seeds)
+- Available roles, categories, statuses
+- Tips for effective test data
+- Resetting seed data
+- Debugging seed issues
+
+**Read this when:**
+- Need test data for development
+- Want to customize seed data
+- Creating reproducible test scenarios
+- Testing request/quote/PO workflows
+- Setting up for QA testing
+
+---
+
 ## 🗂️ At a Glance
 
 ```
@@ -184,7 +207,13 @@ What do you need to do?
 │  ├─→ Check DEVELOPMENT.md for standards
 │  ├─→ Check API.md for endpoint contracts
 │  ├─→ Check DATABASE.md for schema
+│  ├─→ Use SEED_DATA.md to set up test data
 │  └─→ Use architecture.md for design guidance
+│
+├─ I want to test something
+│  ├─→ Read SEED_DATA.md to set up test data
+│  ├─→ Check API.md for endpoint behavior
+│  └─→ Use requirements.md for acceptance criteria
 │
 ├─ I want to implement a feature
 │  ├─→ Find it in IMPLEMENTATION.md for timeline
