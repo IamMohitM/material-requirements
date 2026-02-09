@@ -723,6 +723,7 @@ REACT_APP_ENV=development
 2. Never commit these files to main branch
 3. Use `.gitignore` if they're generated files
 4. Keep only production-ready documentation in `/docs/`
+5. Never add these files in the project root folder unless explicitly specified
 
 **Example Good Documentation:**
 - `/docs/requirements.md` - User stories and features ✅
