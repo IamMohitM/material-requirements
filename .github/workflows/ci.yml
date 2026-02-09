@@ -58,6 +58,25 @@ jobs:
       working-directory: ./backend
       run: npm run build
 
+    - name: Wait for PostgreSQL to be ready
+      working-directory: ./backend
+      run: |
+        until pg_isready -h localhost -U app; do
+          echo 'Waiting for PostgreSQL...'
+          sleep 1
+        done
+
+    - name: Run database migrations
+      working-directory: ./backend
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_USER: app
+        DB_PASSWORD: password
+        DB_NAME: mrms_test
+        NODE_ENV: test
+      run: npm run migrate
+
     - name: Run backend tests
       working-directory: ./backend
       env:
