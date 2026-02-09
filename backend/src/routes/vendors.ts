@@ -102,7 +102,7 @@ router.put(
   requireRole(UserRole.ADMIN, UserRole.FINANCE_OFFICER),
   validateBody(updateVendorSchema),
   asyncHandler(async (req, res) => {
-    const { name, contact_person, email, phone, address, payment_terms, rating, is_active } =
+    const { name, contact_person, email, phone, address, rating, is_active } =
       req.body;
 
     const vendor = await vendorService.updateVendor(req.params.id, {
@@ -111,7 +111,6 @@ router.put(
       email,
       phone,
       address,
-      payment_terms,
       rating,
       is_active,
     });
@@ -200,9 +199,9 @@ router.get(
       vendor_id: vendor.id,
       name: vendor.name,
       rating: vendor.rating,
-      total_transactions: vendor.total_transactions,
-      verification_status: vendor.verification_status,
-      payment_terms: vendor.payment_terms,
+      is_active: vendor.is_active,
+      created_at: vendor.created_at,
+      updated_at: vendor.updated_at,
     };
 
     const response: ApiResponse = {

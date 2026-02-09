@@ -33,7 +33,7 @@ export class VendorService {
     contact_person: string,
     email: string,
     phone: string,
-    address: Record<string, unknown>,
+    address?: string | Record<string, unknown>,
     payment_terms?: string
   ): Promise<Vendor> {
     if (!name || !email || !phone) {
@@ -42,17 +42,18 @@ export class VendorService {
       );
     }
 
+    const addressStr = typeof address === 'string'
+      ? address
+      : (address ? JSON.stringify(address) : undefined);
+
     const vendor = this.getVendorRepository().create({
       id: generateId(),
       name,
       contact_person,
       email,
       phone,
-      address,
-      payment_terms: payment_terms || 'NET 30',
+      address: addressStr,
       rating: 0,
-      total_transactions: 0,
-      verification_status: VerificationStatus.PENDING,
       is_active: true,
     });
 
@@ -117,8 +118,7 @@ export class VendorService {
       contact_person?: string;
       email?: string;
       phone?: string;
-      address?: Record<string, unknown>;
-      payment_terms?: string;
+      address?: string | Record<string, unknown>;
       rating?: number;
       is_active?: boolean;
     }
@@ -129,8 +129,11 @@ export class VendorService {
     if (updates.contact_person) vendor.contact_person = updates.contact_person;
     if (updates.email) vendor.email = updates.email;
     if (updates.phone) vendor.phone = updates.phone;
-    if (updates.address) vendor.address = updates.address;
-    if (updates.payment_terms) vendor.payment_terms = updates.payment_terms;
+    if (updates.address) {
+      vendor.address = typeof updates.address === 'string'
+        ? updates.address
+        : JSON.stringify(updates.address);
+    }
     if (updates.rating !== undefined) vendor.rating = updates.rating;
     if (updates.is_active !== undefined) vendor.is_active = updates.is_active;
 
