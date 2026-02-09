@@ -4,16 +4,15 @@ services:
     image: postgres:15-alpine
     container_name: mrms-db
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mrms
+      POSTGRES_PASSWORD: postgres
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d mrms"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -486,6 +486,52 @@ const schema = joi.object({
 const { error, value } = schema.validate(req.body);
 ```
 
+## ⚠️ CRITICAL: Database Safety Guidelines
+
+**The production database contains critical business data. Follow these guidelines strictly:**
+
+### Never Delete or Modify Production Data Without Explicit Approval
+
+1. **NO destructive operations without approval:**
+   - ❌ Never use `DELETE`, `DROP`, `TRUNCATE`, or `ALTER TABLE` without explicit user authorization
+   - ❌ Never run migrations that modify existing data structures without testing first
+   - ❌ Never clear or reset database tables containing production records
+
+2. **Always test destructive operations on dummy data first:**
+   - ✅ Create a test database locally: `docker-compose up db` with a separate test DB
+   - ✅ Run all migrations and data operations on test data before production
+   - ✅ Verify rollback capability by testing migration reversions
+   - ✅ Document exact steps and confirm with user before running on production
+
+3. **Before any destructive operation:**
+   - ✅ Clearly communicate WHAT will be deleted/modified
+   - ✅ Show WHICH tables/records are affected
+   - ✅ Provide an estimated IMPACT (number of records, affected features)
+   - ✅ Get explicit verbal/written approval from the user
+   - ✅ Create a backup before proceeding
+   - ✅ Keep detailed logs of all changes
+
+4. **Safe operations:**
+   - ✅ SELECT queries - always safe
+   - ✅ INSERT new records - safe if properly validated
+   - ✅ UPDATE with WHERE clause - verify scope first
+   - ✅ Migrations with proper reversions - test locally first
+
+### Database Connection Safety
+
+- Test locally in development first: `docker-compose up` creates local PostgreSQL
+- Verify you're connected to the test/dev database before running any operations
+- Check connection string in logs: `Connected to [host]:[port]/[database]`
+- Use `npm run db:console` to verify data before operations
+
+### Audit Trail Preservation
+
+- All changes are logged in the `AuditLog` table with user, timestamp, and changes
+- Do NOT bypass the audit system - it's critical for compliance
+- Soft deletes use `is_active` flag instead of hard deletes to preserve audit trail
+
+---
+
 ## Database Best Practices
 
 ### Migrations
