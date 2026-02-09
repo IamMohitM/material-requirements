@@ -1,0 +1,68 @@
+/**
+ * Navigation Item Styles
+ * Scoped styles for individual navigation items
+ */
+
+.navItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: #495057;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navItem:hover {
+  background-color: #e9ecef;
+  color: #0d6efd;
+}
+
+.navItem.active {
+  background-color: #e7f1ff;
+  color: #0d6efd;
+  border-left: 4px solid #0d6efd;
+  padding-left: calc(1rem - 4px);
+  font-weight: 600;
+}
+
+.navItem.active:hover {
+  background-color: #d4e5ff;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 0.5rem;
+  margin-left: 0.5rem;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}

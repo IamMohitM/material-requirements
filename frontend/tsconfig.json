@@ -29,7 +29,8 @@
       "@types/*": ["types/*"],
       "@utils/*": ["utils/*"],
       "@hooks/*": ["hooks/*"]
-    }
+    },
+    "types": ["react", "react-dom", "node"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "tests"]

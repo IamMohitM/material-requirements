@@ -1,0 +1,130 @@
+/**
+ * Layout Styles
+ * Main grid layout with header, sidebar, and content area
+ */
+
+.layoutContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 60px 1fr;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mainContent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+}
+
+/* Content area - takes remaining space */
+.content {
+  grid-column: 2;
+  grid-row: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #fff;
+}
+
+/* Sidebar column - collapsible */
+.mainContent > div:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Desktop: sidebar visible */
+@media (min-width: 769px) {
+  .layoutContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: 60px 1fr;
+  }
+
+  .mainContent {
+    grid-template-columns: 250px 1fr;
+  }
+
+  .content {
+    grid-column: 2;
+    padding: 2rem;
+  }
+}
+
+/* Tablet and Mobile: sidebar collapses */
+@media (max-width: 768px) {
+  .layoutContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: 60px 1fr;
+  }
+
+  .mainContent {
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+
+  .content {
+    grid-column: 1;
+    padding: 1.5rem;
+    width: 100%;
+  }
+}
+
+/* Mobile: even smaller padding */
+@media (max-width: 576px) {
+  .content {
+    padding: 1rem;
+  }
+}
+
+/* Mobile overlay backdrop for sidebar */
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .backdrop {
+    display: block;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Scrollbar customization for content area */
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Firefox scrollbar */
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}

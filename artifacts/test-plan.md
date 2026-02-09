@@ -1,82 +1,65 @@
-# Test Plan: Tier 2 Frontend - Delivery Tracking & Invoice Matching
+# Test Plan: Navigation System
 
-## Test Strategy
-
-**Scope:**
-- Delivery Receipt & Batch Tracking (Story 8) - Frontend components
-- Invoice Submission & 3-Way Matching (Story 9) - Frontend components
-- Navigation, routing, and Redux state management
-- API service layer functionality
-- User interface and user workflows
-
-**Approach:** Manual testing of frontend components, integration testing with Redux, and API service verification
-
-**Environment:** React dev server (port 3001), Backend API (port 3000), PostgreSQL, Redis
+**Date Created:** 2026-02-09
+**Version:** 1.0
+**Scope:** MRMS Frontend Navigation System
 
 ## Test Coverage Summary
 
-### Core Functionality Tests
-1. Navigation to /deliveries and /invoices pages
-2. DeliveryForm and InvoiceForm creation and submission
-3. Delivery and Invoice list display with filtering/pagination
-4. 3-Way Matching Analysis (Quantity, Price, Brand, Timing)
-5. Redux state management integration
-6. API service layer calls
-7. Data persistence and retrieval
+### Component Rendering Tests (4 tests)
+- Header visible on all authenticated pages with logo, title, user menu
+- Sidebar visible with PROCUREMENT, FULFILLMENT, ADMIN sections
+- User menu displays name and role
+- Sidebar hidden on login page
 
-### Edge Cases
-- Empty/invalid form submissions
-- Negative/zero quantities
-- Large numbers
-- Multiple deliveries for same PO
-- Missing or mismatched data
+### Navigation Functionality Tests (7 tests)
+- Dashboard route and title
+- Requests route and title
+- Quotes route and title
+- Purchase Orders route and title
+- Vendors route and title
+- Deliveries route and title
+- Invoices route and title
 
-### Error Scenarios
-- Network failures
-- API validation errors
-- Concurrent form submissions
-- Missing Redux state
+### Active Route Highlighting Tests (2 tests)
+- Current page highlighted with blue accent
+- Highlight updates when navigating to different page
 
-## Test Cases (29 Total)
+### Desktop Responsiveness Tests (3 tests)
+- Sidebar fixed and always visible (>768px)
+- Hamburger menu button hidden on desktop
+- Layout stable on desktop
 
-### Story 8: Delivery Tracking - 13 Tests
+### Mobile Responsiveness Tests (6 tests)
+- Sidebar hidden by default (<768px)
+- Hamburger menu button visible
+- Hamburger toggles sidebar open/close
+- Sidebar appears as overlay with backdrop
+- Clicking nav item closes sidebar
+- Clicking backdrop closes sidebar
 
-1. ✓ Navigate to Deliveries Page
-2. ✓ Create Delivery Form Opens
-3. ✓ DeliveryForm Shows All Fields
-4. ✓ Add Line Items Works
-5. ✓ Line Item Quantity Validation
-6. ✓ Quality Score Calculation (good_qty / (good_qty + damaged_qty))
-7. ✓ Submit Delivery Form
-8. ✓ Delivery Appears in List
-9. ✓ Filter by Status (PENDING/PARTIAL/COMPLETE)
-10. ✓ Filter by Date Range
-11. ✓ Quality Score Badges Show Colors (50%=red, 95%=yellow, 100%=green)
-12. ✓ Click Delivery Row Navigates to /deliveries/{id}
-13. ✓ Pagination Works (20 items per page)
+### User Menu Tests (4 tests)
+- User name displays in menu button
+- User role displays in menu button
+- Logout button opens in dropdown
+- Clicking logout redirects to login
 
-### Story 9: Invoice & 3-Way Matching - 16 Tests
+### Sidebar Organization Tests (3 tests)
+- PROCUREMENT section: Dashboard, Requests, Quotes, Purchase Orders
+- FULFILLMENT section: Deliveries, Invoices
+- ADMIN section: Vendors (admin only)
 
-14. ✓ Navigate to Invoices Page
-15. ✓ Create Invoice Form Opens
-16. ✓ InvoiceForm Shows All Fields
-17. ✓ Add Invoice Line Items
-18. ✓ Auto-Calculate Line Item Total
-19. ✓ Auto-Calculate Grand Total
-20. ✓ Validate Grand Total Matches Sum
-21. ✓ Submit Invoice Triggers Matching
-22. ✓ MatchingAnalysis Component Displays
-23. ✓ Quantity Match: Fully Matched (100/100/100)
-24. ✓ Quantity Match: Partial Match (100/95/100)
-25. ✓ Quantity Match: Mismatched (100/100/150)
-26. ✓ Price Match: Fully Matched (no variance)
-27. ✓ Price Match: Warning (5% variance)
-28. ✓ Brand Match: Matched vs Mismatched
-29. ✓ Timing Match: Valid vs Invoice Before Delivery
-30. ✓ Overall Status: FULLY_MATCHED / PARTIAL_MATCHED / MISMATCHED
-31. ✓ Invoice Appears in List After Creation
-32. ✓ Matching Status Badge Shows (green/yellow/red)
-33. ✓ Discrepancy Count Displays
-34. ✓ Filter by Matching Status
-35. ✓ Search by Invoice Number
+### Accessibility Tests (3 tests)
+- Tab navigation through header and sidebar elements
+- Buttons have aria-labels
+- Focus states visible on interactive elements
 
+### Edge Cases Tests (5 tests)
+- Very long page titles truncate properly
+- Very long usernames truncate properly
+- Browser back button navigates correctly
+- Rapid navigation clicks handled gracefully
+- Session timeout redirects to login
+
+**Total Test Cases: 37**
+**Target Pass Rate: 100%**
