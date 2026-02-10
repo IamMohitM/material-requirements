@@ -70,7 +70,7 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
             </div>
             <div className="col-md-3">
               <strong>Project</strong>
-              <p>{request.project_id}</p>
+              <p>{request.project_name || request.project_id}</p>
             </div>
             <div className="col-md-3">
               <strong>Created</strong>

@@ -65,7 +65,7 @@ function Dashboard() {
             <Button
               variant="primary"
               className="me-2 mb-2"
-              onClick={() => navigate('/requests')}
+              onClick={() => navigate('/requests?create=1')}
             >
               Create Request
             </Button>

@@ -1,5 +1,6 @@
 import { AppDataSource } from '@config/database';
 import { Request } from '@entities/Request';
+import { Project } from '@entities/Project';
 import { NotFoundError, ValidationError, BadRequestError } from '@utils/errors';
 import {
   generateId,
@@ -8,6 +9,7 @@ import {
   calculateTotalPages,
 } from '@utils/helpers';
 import { RequestStatus, PaginatedResponse } from '../types/index';
+import { In } from 'typeorm';
 
 export class RequestService {
   /**
@@ -15,6 +17,10 @@ export class RequestService {
    */
   private getRequestRepository() {
     return AppDataSource.getRepository(Request);
+  }
+
+  private getProjectRepository() {
+    return AppDataSource.getRepository(Project);
   }
 
   /**
@@ -80,7 +86,7 @@ export class RequestService {
     submittedById?: string;
     page?: number;
     pageSize?: number;
-  }): Promise<PaginatedResponse<Request>> {
+  }): Promise<PaginatedResponse<Request & { project_name?: string | null }>> {
     const {
       projectId,
       status,
@@ -111,8 +117,24 @@ export class RequestService {
       .take(limit)
       .getManyAndCount();
 
+    const projectIds = Array.from(new Set(items.map((item) => item.project_id)));
+    const projectNameById = new Map<string, string>();
+
+    if (projectIds.length > 0) {
+      const projects = await this.getProjectRepository().find({
+        select: ['id', 'name'],
+        where: { id: In(projectIds) },
+      });
+      projects.forEach((project) => projectNameById.set(project.id, project.name));
+    }
+
+    const enrichedItems = items.map((item) => ({
+      ...item,
+      project_name: projectNameById.get(item.project_id) || null,
+    }));
+
     return {
-      items,
+      items: enrichedItems,
       total,
       page,
       page_size: pageSize,
@@ -258,21 +280,32 @@ export class RequestService {
   /**
    * Get requests by project
    */
-  async getRequestsByProject(projectId: string, page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
+  async getRequestsByProject(
+    projectId: string,
+    page = 1,
+    pageSize = 20
+  ): Promise<PaginatedResponse<Request & { project_name?: string | null }>> {
     return this.getRequests({ projectId, page, pageSize });
   }
 
   /**
    * Get requests for a specific project (alias for getRequestsByProject)
    */
-  async getProjectRequests(projectId: string, page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
+  async getProjectRequests(
+    projectId: string,
+    page = 1,
+    pageSize = 20
+  ): Promise<PaginatedResponse<Request & { project_name?: string | null }>> {
     return this.getRequests({ projectId, page, pageSize });
   }
 
   /**
    * Get requests for approval
    */
-  async getPendingRequests(page = 1, pageSize = 20): Promise<PaginatedResponse<Request>> {
+  async getPendingRequests(
+    page = 1,
+    pageSize = 20
+  ): Promise<PaginatedResponse<Request & { project_name?: string | null }>> {
     return this.getRequests({ status: RequestStatus.SUBMITTED, page, pageSize });
   }
 

@@ -11,8 +11,9 @@ RUN npm ci --legacy-peer-deps
 # Copy source
 COPY . .
 
-# Build React app (with increased memory for build)
-RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build
+# Build React app with lower memory footprint
+ENV GENERATE_SOURCEMAP=false
+RUN NODE_OPTIONS="--max-old-space-size=1024" npm run build
 
 # Production image
 FROM node:18-alpine

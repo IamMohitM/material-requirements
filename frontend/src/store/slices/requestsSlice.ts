@@ -10,6 +10,7 @@ export interface Material {
 export interface Request {
   id: string;
   project_id: string;
+  project_name?: string | null;
   request_number: string;
   status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'converted_to_po' | 'cancelled';
   materials: Material[];

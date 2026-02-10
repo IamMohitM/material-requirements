@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Table, Button, Badge, Form, Row, Col, Card, Pagination, Spinner } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchRequests, setFilters, setPage, RequestFilters, Request } from '../../store/slices/requestsSlice';
+import { fetchProjects } from '../../store/slices/projectsSlice';
+import { fetchMaterials } from '../../store/slices/materialsSlice';
 
 interface RequestListProps {
   onCreateClick: () => void;
@@ -11,12 +13,26 @@ interface RequestListProps {
 export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowClick }) => {
   const dispatch = useAppDispatch();
   const { list, isLoading, filters, pagination } = useAppSelector((state) => state.requests);
+  const { projects } = useAppSelector((state) => state.projects);
+  const { materials } = useAppSelector((state) => state.materials);
 
   const [localFilters, setLocalFilters] = useState<RequestFilters>(filters);
 
   useEffect(() => {
     dispatch(fetchRequests({ page: pagination.page, pageSize: pagination.pageSize, filters }));
   }, [dispatch, filters, pagination.page, pagination.pageSize]);
+
+  useEffect(() => {
+    if (projects.length === 0) {
+      dispatch(fetchProjects({ pageSize: 200 }));
+    }
+  }, [dispatch, projects.length]);
+
+  useEffect(() => {
+    if (materials.length === 0) {
+      dispatch(fetchMaterials({ pageSize: 200 }));
+    }
+  }, [dispatch, materials.length]);
 
   const handleFilterChange = (newFilters: RequestFilters) => {
     setLocalFilters(newFilters);
@@ -41,6 +57,30 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
 
   const handlePaginationClick = (pageNum: number) => {
     dispatch(setPage(pageNum));
+  };
+
+  const projectNameById = useMemo(() => {
+    return new Map(projects.map((project) => [project.id, project.name]));
+  }, [projects]);
+
+  const materialNameById = useMemo(() => {
+    return new Map(materials.map((material) => [material.id, material.name]));
+  }, [materials]);
+
+  const getMaterialSummary = (request: Request) => {
+    const names = (request.materials || [])
+      .map((item) => materialNameById.get(item.material_id))
+      .filter((name): name is string => !!name);
+
+    const uniqueNames = Array.from(new Set(names));
+
+    if (uniqueNames.length === 0) {
+      return 'Materials';
+    }
+
+    const base = uniqueNames.slice(0, 2).join(', ');
+    const remaining = uniqueNames.length - 2;
+    return remaining > 0 ? `${base} +${remaining}` : base;
   };
 
   const totalPages = Math.ceil(pagination.total / pagination.pageSize) || 1;
@@ -172,13 +212,18 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
                 {list.map((request) => {
                   // Handle cases where materials might be undefined
                   const materialsCount = Array.isArray(request.materials) ? request.materials.length : 0;
+                  const projectName =
+                    request.project_name ||
+                    projectNameById.get(request.project_id) ||
+                    request.project_id;
 
                   return (
                     <tr key={request.id} onClick={() => onRowClick(request)} style={{ cursor: 'pointer' }}>
                       <td>
-                        <strong>{request.request_number}</strong>
+                        <div className="fw-semibold">{getMaterialSummary(request)}</div>
+                        <div className="text-muted small">Request #{request.request_number}</div>
                       </td>
-                      <td>{request.project_id}</td>
+                      <td>{projectName}</td>
                       <td>{materialsCount}</td>
                       <td>{getStatusBadge(request.status)}</td>
                       <td>

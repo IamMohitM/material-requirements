@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Modal, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
-import { createRequest } from '../../store/slices/requestsSlice';
+import { createRequest, fetchRequests } from '../../store/slices/requestsSlice';
 import { fetchProjects, searchProjects, createProject } from '../../store/slices/projectsSlice';
 import { fetchMaterials, searchMaterials, createMaterial } from '../../store/slices/materialsSlice';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -34,6 +34,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
   const { isLoading: requestLoading, error: requestError } = useAppSelector(
     (state) => state.requests
   );
+  const { filters, pagination } = useAppSelector((state) => state.requests);
   const { projects, isLoading: projectsLoading, error: projectsError } = useAppSelector(
     (state) => state.projects
   );
@@ -99,6 +100,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
         reset();
         setMaterials([{ material_id: '', quantity: 0, unit: '' }]);
         setSelectedProject(null);
+        dispatch(fetchRequests({ page: pagination.page, pageSize: pagination.pageSize, filters }));
         onSuccess();
       }
     } catch (error) {
