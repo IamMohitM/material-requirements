@@ -104,7 +104,6 @@ services:
     volumes:
       - ./backend/src:/app/src
       - ./backend/tests:/app/tests
-      - ./backend/dist:/app/dist
       - /app/node_modules
     command: npm start
     networks:
