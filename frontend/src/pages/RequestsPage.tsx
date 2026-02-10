@@ -3,8 +3,12 @@ import { Container } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import { RequestList, RequestForm, RequestDetail } from '../components/requests';
 import { Request } from '../store/slices/requestsSlice';
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { fetchRequestDetail } from '../store/slices/requestsSlice';
 
 export const RequestsPage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { detail } = useAppSelector((state) => state.requests);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -38,6 +42,7 @@ export const RequestsPage: React.FC = () => {
   const handleRowClick = (request: Request) => {
     setSelectedRequest(request);
     setShowDetail(true);
+    dispatch(fetchRequestDetail(request.id));
   };
 
   const handleDetailClose = () => {
@@ -49,7 +54,7 @@ export const RequestsPage: React.FC = () => {
     <Container fluid className="py-5">
       {showDetail ? (
         <RequestDetail
-          request={selectedRequest}
+          request={detail || selectedRequest}
           onClose={handleDetailClose}
         />
       ) : (

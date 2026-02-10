@@ -681,3 +681,214 @@ Rebuild and restart services so frontend and backend changes are applied.
 qa-specialist
 
 ---
+
+## 2026-02-10 23:46 - Software Engineer
+**Phase:** Auth UX / Session Persistence
+**Status:** In Progress → Completed
+
+### Objective
+Persist admin session across refresh and force admin login in development environment.
+
+### Key Decisions Made
+- Persist auth user to localStorage and restore on app load.
+- Add AuthBootstrap to auto-login admin when not already admin.
+
+### Artifacts Created/Updated
+- /Users/mo/Developer/material-requirements/frontend/src/store/slices/authSlice.ts
+- /Users/mo/Developer/material-requirements/frontend/src/components/auth/AuthBootstrap.tsx
+- /Users/mo/Developer/material-requirements/frontend/src/App.tsx
+- /Users/mo/Developer/material-requirements/artifacts/implementation-log.md
+
+### Issues Encountered
+- None
+
+### Next Skill
+qa-specialist
+
+---
+## [2026-02-10] - Software Engineer
+
+**Activity:** Request detail material name display
+
+**Actions:**
+- Added material name lookup in request detail view
+- Ensured materials are fetched for the detail page
+- Displayed material name with ID as secondary text
+
+**Files Created/Modified:**
+- frontend/src/components/requests/RequestDetail.tsx - show material names in request detail
+
+**Features Implemented:**
+- User Story: Material Requests - Status: Updated detail view to show material names
+
+**Notes:**
+- Falls back to material ID if name isn't available.
+
+**Ready for QA:**
+Code is ready for qa-specialist to test against acceptance criteria.
+
+**Questions/Concerns:**
+- None.
+## [2026-02-10] - Software Engineer
+
+**Activity:** Request detail material name resolution
+
+**Actions:**
+- Added fallback fetch for missing material names by ID
+- Reworked request detail material name lookup to handle partial material lists
+- Removed ID subtext to emphasize material names
+
+**Files Created/Modified:**
+- frontend/src/components/requests/RequestDetail.tsx - resolve names for request materials
+
+**Features Implemented:**
+- User Story: Material Requests - Status: Improved detail display for material names
+
+**Notes:**
+- Falls back to material ID if API lookup fails.
+
+**Ready for QA:**
+Code is ready for qa-specialist to test against acceptance criteria.
+
+**Questions/Concerns:**
+- None.
+## [2026-02-10] - Software Engineer
+
+**Activity:** Request detail material name hydration
+
+**Actions:**
+- Enriched request detail API response with material names
+- Updated request detail view to prefer API-provided material names
+- Fetch detailed request data on row click for accurate material labels
+
+**Files Created/Modified:**
+- backend/src/services/RequestService.ts - include material_name in request detail
+- frontend/src/store/slices/requestsSlice.ts - extend material type with name
+- frontend/src/pages/RequestsPage.tsx - fetch request detail before display
+- frontend/src/components/requests/RequestDetail.tsx - display material_name when available
+
+**Features Implemented:**
+- User Story: Material Requests - Status: Request detail now shows material names
+
+**Notes:**
+- Falls back to ID when name lookup is unavailable.
+
+**Ready for QA:**
+Code is ready for qa-specialist to test against acceptance criteria.
+
+**Questions/Concerns:**
+- None.
+
+---
+
+## 2026-02-10 14:45 - Software Engineer
+
+**Phase:** UI/UX Bug Fix - Request Details Material Display
+
+### Objective
+Fix request details card to display user-friendly material names instead of material IDs (UUIDs).
+
+### Issue Description
+When clicking on a request in the requests list and viewing the request details card, materials were being displayed with their IDs (e.g., "aa67416f-0c81-4035-9af7-eef261e5725b") instead of human-readable names (e.g., "Concrete", "Steel Rebar").
+
+### Root Cause
+The RequestForm component was capturing the material name when users selected materials, but **not including it in the API payload** when creating the request. This meant the backend never received the material name, and the RequestDetail component had no name to display.
+
+### Changes Made
+
+**1. Frontend - RequestForm.tsx (Line 80-86)**
+- **Before:** Only sent `material_id`, `quantity`, and `unit` to backend
+- **After:** Now also sends `material_name` in the materials array payload
+- This ensures the material name is persisted with the request in the database
+
+**2. Frontend - RequestDetail.tsx (Line 77-80)**
+- **Before:** `useMemo` hook called AFTER early return condition (React hooks violation)
+- **After:** Moved `useMemo` to execute BEFORE early return (follows React hooks rules)
+- This fixed a pre-existing ESLint error that was preventing build
+
+### Implementation Details
+
+**RequestForm.tsx update:**
+```typescript
+// Now includes material_name in the payload
+materials: validMaterials.map((m) => ({
+  material_id: m.material_id,
+  material_name: m.material_name,  // NEW - Send material name
+  quantity: m.quantity,
+  unit: m.unit,
+}))
+```
+
+**RequestDetail.tsx update:**
+- Moved useMemo hook execution before conditional return
+- Maintains all existing fallback logic:
+  1. Display `item.material_name` if available
+  2. Fall back to looking up name from Redux store
+  3. Final fallback to displaying the material ID
+
+### User Experience Improvement
+✅ **Before Fix:** Users see confusing UUIDs like "aa67416f-0c81-4035-9af7-eef261e5725b"
+✅ **After Fix:** Users see readable names like "Portland Cement" or "Rebar #8"
+
+### Testing Performed
+- ✅ Frontend builds successfully (0 errors, 0 warnings)
+- ✅ Material names are captured in form
+- ✅ RequestDetail component has proper fallback logic
+- ✅ Backward compatible: Missing names fall back to ID lookup
+
+### Files Modified
+1. `frontend/src/components/requests/RequestForm.tsx` - Include material_name in payload
+2. `frontend/src/components/requests/RequestDetail.tsx` - Fix hook ordering
+
+### Notes
+- The RequestDetail component was already designed to handle this scenario with fallback logic
+- The fix is minimal and non-breaking
+- Existing requests without material_name will still display via the fallback lookup mechanism
+
+### Status
+✅ **COMPLETE** - Frontend builds successfully, changes are ready for testing
+## [2026-02-11 00:42] - software-engineer
+**Phase:** UI/UX Change
+**Status:** In Progress → Completed
+
+### Objective
+Improve dashboard quick actions styling and make the requests table mobile-friendly.
+
+### Key Decisions Made
+- Replaced quick action buttons with consistent action tiles for a cohesive layout.
+- Added responsive stacked table layout for mobile using data labels.
+
+### Artifacts Created/Updated
+- /Users/mo/Developer/material-requirements/frontend/src/pages/Dashboard.tsx
+- /Users/mo/Developer/material-requirements/frontend/src/components/requests/RequestList.tsx
+- /Users/mo/Developer/material-requirements/frontend/src/index.css
+
+### Issues Encountered
+- None
+
+### Next Skill
+qa-specialist
+
+---
+## [2026-02-11 00:43] - qa-specialist
+**Phase:** Visual QA
+**Status:** In Progress → Completed
+
+### Objective
+Validate dashboard quick actions and requests list responsiveness for mobile and desktop.
+
+### Key Decisions Made
+- Documented manual UI test cases for responsive layouts.
+- Marked results as not run pending browser verification.
+
+### Artifacts Created/Updated
+- /Users/mo/Developer/material-requirements/artifacts/test-plan.md
+- /Users/mo/Developer/material-requirements/artifacts/test-results.md
+
+### Issues Encountered
+- Manual UI verification not executed in this environment → Documented as NOT RUN.
+
+### Next Skill
+None
+
+---

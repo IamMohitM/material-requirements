@@ -6,6 +6,38 @@ import { RootState } from '../store/store';
 function Dashboard() {
   const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
+  const quickActions = [
+    {
+      title: 'Create Request',
+      description: 'Start a new material request for your project.',
+      cta: 'Create',
+      to: '/requests?create=1',
+    },
+    {
+      title: 'View Requests',
+      description: 'Review submitted requests and track status.',
+      cta: 'Open',
+      to: '/requests',
+    },
+    {
+      title: 'Manage Vendors',
+      description: 'Update vendor records and rate history.',
+      cta: 'Manage',
+      to: '/vendors',
+    },
+    {
+      title: 'Track Deliveries',
+      description: 'Log deliveries and track partial receipts.',
+      cta: 'Track',
+      to: '/deliveries',
+    },
+    {
+      title: 'Manage Invoices',
+      description: 'Review invoices and matching status.',
+      cta: 'Review',
+      to: '/invoices',
+    },
+  ];
 
   return (
     <Container className="container-main">
@@ -57,46 +89,30 @@ function Dashboard() {
       </Row>
 
       <div className="mt-4">
-        <Card>
-          <Card.Header>
+        <Card className="quick-actions-card">
+          <Card.Header className="quick-actions-header">
             <Card.Title className="mb-0">Quick Actions</Card.Title>
           </Card.Header>
           <Card.Body>
-            <Button
-              variant="primary"
-              className="me-2 mb-2"
-              onClick={() => navigate('/requests?create=1')}
-            >
-              Create Request
-            </Button>
-            <Button
-              variant="outline-primary"
-              className="me-2 mb-2"
-              onClick={() => navigate('/requests')}
-            >
-              View Requests
-            </Button>
-            <Button
-              variant="outline-primary"
-              className="me-2 mb-2"
-              onClick={() => navigate('/vendors')}
-            >
-              Manage Vendors
-            </Button>
-            <Button
-              variant="outline-success"
-              className="me-2 mb-2"
-              onClick={() => navigate('/deliveries')}
-            >
-              Track Deliveries
-            </Button>
-            <Button
-              variant="outline-success"
-              className="me-2 mb-2"
-              onClick={() => navigate('/invoices')}
-            >
-              Manage Invoices
-            </Button>
+            <Row className="g-3">
+              {quickActions.map((action) => (
+                <Col key={action.title} xs={12} sm={6} lg={4}>
+                  <Card className="quick-action-tile h-100">
+                    <Card.Body>
+                      <div className="quick-action-title">{action.title}</div>
+                      <div className="quick-action-description">{action.description}</div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate(action.to)}
+                      >
+                        {action.cta}
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
           </Card.Body>
         </Card>
       </div>

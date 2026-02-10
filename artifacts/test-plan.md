@@ -174,3 +174,34 @@
 **Target Pass Rate: 100%**
 **Critical Issues Allowed: 0**
 **Major Issues Allowed: 0**
+
+# Test Plan Addendum: UI Refresh (Dashboard + Requests)
+
+## Scope
+- Dashboard quick actions layout and visual consistency
+- Requests list table responsiveness on mobile
+
+## Test Cases
+1. **Dashboard Quick Actions Layout (Desktop)**
+   - **Given:** User is on Dashboard (>= 1024px width)
+   - **When:** Quick Actions section is visible
+   - **Then:** Action tiles are aligned in a grid, consistent styling, and CTA buttons visible
+   - **Type:** Happy path
+
+2. **Dashboard Quick Actions Layout (Mobile)**
+   - **Given:** User is on Dashboard (<= 768px width)
+   - **When:** Quick Actions section is visible
+   - **Then:** Tiles stack cleanly with readable spacing and buttons reachable
+   - **Type:** Responsive
+
+3. **Requests Table Stacked Layout (Mobile)**
+   - **Given:** User is on Requests page (<= 768px width)
+   - **When:** Request list is visible
+   - **Then:** Table converts to stacked cards with data labels and readable values
+   - **Type:** Responsive
+
+4. **Requests Table Layout (Desktop)**
+   - **Given:** User is on Requests page (>= 1024px width)
+   - **When:** Request list is visible
+   - **Then:** Table displays standard columns without layout regressions
+   - **Type:** Regression

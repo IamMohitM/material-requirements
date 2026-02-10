@@ -12,10 +12,12 @@ import DeliveriesPage from './pages/DeliveriesPage';
 import InvoicesPage from './pages/InvoicesPage';
 import { Layout } from './components/layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AuthBootstrap from './components/auth/AuthBootstrap';
 
 function App() {
   return (
     <Provider store={store}>
+      <AuthBootstrap />
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}

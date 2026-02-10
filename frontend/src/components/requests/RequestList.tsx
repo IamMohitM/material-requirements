@@ -197,7 +197,7 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
       ) : (
         <>
           <Card className="table-responsive">
-            <Table hover className="mb-0">
+            <Table hover className="mb-0 request-table">
               <thead>
                 <tr>
                   <th>Request #</th>
@@ -218,20 +218,24 @@ export const RequestList: React.FC<RequestListProps> = ({ onCreateClick, onRowCl
                     request.project_id;
 
                   return (
-                    <tr key={request.id} onClick={() => onRowClick(request)} style={{ cursor: 'pointer' }}>
-                      <td>
+                    <tr
+                      key={request.id}
+                      onClick={() => onRowClick(request)}
+                      className="request-row"
+                    >
+                      <td data-label="Request">
                         <div className="fw-semibold">{getMaterialSummary(request)}</div>
                         <div className="text-muted small">Request #{request.request_number}</div>
                       </td>
-                      <td>{projectName}</td>
-                      <td>{materialsCount}</td>
-                      <td>{getStatusBadge(request.status)}</td>
-                      <td>
+                      <td data-label="Project">{projectName}</td>
+                      <td data-label="Materials">{materialsCount}</td>
+                      <td data-label="Status">{getStatusBadge(request.status)}</td>
+                      <td data-label="Approval">
                         <Badge bg={request.approval_status === 'approved' ? 'success' : request.approval_status === 'rejected' ? 'danger' : 'warning'}>
                           {request.approval_status || 'pending'}
                         </Badge>
                       </td>
-                      <td>{new Date(request.created_at).toLocaleDateString()}</td>
+                      <td data-label="Created">{new Date(request.created_at).toLocaleDateString()}</td>
                     </tr>
                   );
                 })}

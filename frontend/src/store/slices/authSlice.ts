@@ -16,14 +16,20 @@ interface AuthState {
   error: string | null;
 }
 
-// In development mode, don't restore from localStorage - always force fresh auto-login
-const isDevelopment = process.env.NODE_ENV === 'development';
+const loadStoredUser = () => {
+  try {
+    const raw = localStorage.getItem('authUser');
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+};
 
 const initialState: AuthState = {
-  user: null,
-  accessToken: isDevelopment ? null : localStorage.getItem('accessToken'),
-  refreshToken: isDevelopment ? null : localStorage.getItem('refreshToken'),
-  isAuthenticated: isDevelopment ? false : !!localStorage.getItem('accessToken'),
+  user: loadStoredUser(),
+  accessToken: localStorage.getItem('accessToken'),
+  refreshToken: localStorage.getItem('refreshToken'),
+  isAuthenticated: !!localStorage.getItem('accessToken'),
   isLoading: false,
   error: null,
 };
@@ -37,6 +43,7 @@ const authSlice = createSlice({
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+      localStorage.setItem('authUser', JSON.stringify(action.payload));
     },
     setTokens: (
       state,
@@ -58,6 +65,7 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('authUser');
     },
   },
 });

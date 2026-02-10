@@ -3,6 +3,7 @@ import { requestsApi } from '../../services/requestsApi';
 
 export interface Material {
   material_id: string;
+  material_name?: string | null;
   quantity: number;
   unit: string;
 }
