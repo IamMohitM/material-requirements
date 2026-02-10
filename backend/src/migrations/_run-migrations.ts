@@ -21,6 +21,5 @@ async function runMigrations() {
   }
 }
 
-// Commented out during testing - migrations should not run during tests
-// To run migrations in development/production, uncomment the line below:
-// runMigrations();
+// Run migrations when this file is executed directly
+runMigrations();
