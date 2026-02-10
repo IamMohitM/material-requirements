@@ -73,6 +73,32 @@ export const fetchProjectById = createAsyncThunk(
   }
 );
 
+export const updateProject = createAsyncThunk(
+  'projects/updateProject',
+  async (
+    { id, data }: { id: string; data: CreateProjectRequest },
+    { rejectWithValue }
+  ) => {
+    try {
+      return await projectsApi.updateProject(id, data);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.error?.message || 'Failed to update project');
+    }
+  }
+);
+
+export const deleteProject = createAsyncThunk(
+  'projects/deleteProject',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await projectsApi.deleteProject(id);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.error?.message || 'Failed to delete project');
+    }
+  }
+);
+
 const projectsSlice = createSlice({
   name: 'projects',
   initialState,
@@ -138,6 +164,39 @@ const projectsSlice = createSlice({
         state.selectedProject = action.payload;
       })
       .addCase(fetchProjectById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Update project
+      .addCase(updateProject.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProject.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.projects.findIndex((p) => p.id === action.payload.id);
+        if (index >= 0) {
+          state.projects[index] = action.payload;
+        }
+        state.selectedProject = action.payload;
+      })
+      .addCase(updateProject.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      // Delete project
+      .addCase(deleteProject.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteProject.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.projects = state.projects.filter((p) => p.id !== action.payload);
+        if (state.selectedProject?.id === action.payload) {
+          state.selectedProject = null;
+        }
+      })
+      .addCase(deleteProject.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

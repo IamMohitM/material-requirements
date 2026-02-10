@@ -144,9 +144,9 @@ export const VendorList: React.FC<VendorListProps> = ({ onCreateClick, onRowClic
                     <td>{vendor.contact_person || '-'}</td>
                     <td>{vendor.email || '-'}</td>
                     <td>
-                      {vendor.rating ? (
+                      {vendor.rating && !isNaN(Number(vendor.rating)) ? (
                         <Badge bg="info">
-                          ⭐ {vendor.rating.toFixed(1)}
+                          ⭐ {Number(vendor.rating).toFixed(1)}
                         </Badge>
                       ) : (
                         <span className="text-muted">-</span>

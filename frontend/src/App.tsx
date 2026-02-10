@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { store } from './store/store';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
+import { ProjectsPage } from './pages/ProjectsPage';
 import RequestsPage from './pages/RequestsPage';
 import QuotesPage from './pages/QuotesPage';
 import POsPage from './pages/POsPage';
@@ -29,6 +30,7 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/requests" element={<RequestsPage />} />
             <Route path="/quotes" element={<QuotesPage />} />
             <Route path="/pos" element={<POsPage />} />

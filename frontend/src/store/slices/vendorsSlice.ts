@@ -262,7 +262,7 @@ const vendorsSlice = createSlice({
       .addCase(updateVendorRates.fulfilled, (state, action) => {
         state.isLoading = false;
         if (state.detail) {
-          state.detail.rates = action.payload;
+          state.detail = action.payload;
         }
       })
       .addCase(updateVendorRates.rejected, (state, action) => {

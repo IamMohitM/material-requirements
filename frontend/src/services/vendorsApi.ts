@@ -1,6 +1,29 @@
 import { api } from './api';
 import { Vendor, VendorFilters, VendorRate } from '../store/slices/vendorsSlice';
 
+const normalizeRate = (rate: any): VendorRate => ({
+  ...rate,
+  price: Number(rate?.price),
+});
+
+const normalizeVendor = (vendor: any): Vendor => ({
+  ...vendor,
+  rating: vendor?.rating === null || vendor?.rating === undefined ? undefined : Number(vendor.rating),
+  delivery_lead_time_days:
+    vendor?.delivery_lead_time_days === null || vendor?.delivery_lead_time_days === undefined
+      ? undefined
+      : Number(vendor.delivery_lead_time_days),
+  rates: Array.isArray(vendor?.rates) ? vendor.rates.map(normalizeRate) : vendor?.rates,
+  rate_history: Array.isArray(vendor?.rate_history)
+    ? vendor.rate_history.map((history: any) => ({
+        ...history,
+        price_old: Number(history?.price_old),
+        price_new: Number(history?.price_new),
+        change_percentage: Number(history?.change_percentage),
+      }))
+    : vendor?.rate_history,
+});
+
 export const vendorsApi = {
   async listVendors(page: number = 1, pageSize: number = 20, filters?: VendorFilters) {
     const params = new URLSearchParams({
@@ -13,48 +36,54 @@ export const vendorsApi = {
 
     const response = await api.get(`/api/v1/vendors?${params.toString()}`);
     return {
-      data: response.data.data,
+      data: Array.isArray(response.data.data)
+        ? response.data.data.map(normalizeVendor)
+        : response.data.data,
       total: response.data.meta?.total || 0,
     };
   },
 
   async getVendor(id: string) {
     const response = await api.get(`/api/v1/vendors/${id}`);
-    return response.data.data;
+    return normalizeVendor(response.data.data);
   },
 
   async createVendor(data: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>) {
-    const response = await api.post('/api/v1/vendors', {
+    const payload: any = {
       name: data.name,
-      contact_person: data.contact_person,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      state: data.state,
-      zip_code: data.zip_code,
-      country: data.country,
-      payment_terms: data.payment_terms,
-      delivery_lead_time_days: data.delivery_lead_time_days,
-      specialties: data.specialties,
       is_active: data.is_active,
-    });
-    return response.data.data;
+    };
+
+    // Only add optional fields if they have values
+    if (data.contact_person?.trim()) payload.contact_person = data.contact_person.trim();
+    if (data.email?.trim()) payload.email = data.email.trim();
+    if (data.phone?.trim()) payload.phone = data.phone.trim();
+    if (data.address?.trim()) payload.address = data.address.trim();
+
+    const response = await api.post('/api/v1/vendors', payload);
+    return normalizeVendor(response.data.data);
   },
 
   async updateVendor(id: string, data: Partial<Vendor>) {
     const response = await api.put(`/api/v1/vendors/${id}`, data);
-    return response.data.data;
+    return normalizeVendor(response.data.data);
   },
 
   async getRateHistory(id: string) {
     const response = await api.get(`/api/v1/vendors/${id}/rate-history`);
-    return response.data.data || [];
+    return Array.isArray(response.data.data)
+      ? response.data.data.map((history: any) => ({
+          ...history,
+          price_old: Number(history?.price_old),
+          price_new: Number(history?.price_new),
+          change_percentage: Number(history?.change_percentage),
+        }))
+      : [];
   },
 
   async updateRates(id: string, rates: VendorRate[]) {
     const response = await api.post(`/api/v1/vendors/${id}/rates`, { rates });
-    return response.data.data;
+    return normalizeVendor(response.data.data);
   },
 
   async deleteVendor(id: string) {

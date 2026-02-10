@@ -59,6 +59,13 @@ export const NAVIGATION_SECTIONS: NavigationSection[] = [
     collapsible: false,
     items: [
       {
+        label: 'Projects',
+        path: '/projects',
+        icon: 'Briefcase',
+        section: 'admin',
+        requiredRoles: ['admin', 'finance_officer'],
+      },
+      {
         label: 'Vendors',
         path: '/vendors',
         icon: 'Building2',

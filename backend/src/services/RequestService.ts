@@ -23,7 +23,7 @@ export class RequestService {
   async createRequest(
     projectId: string,
     submittedById: string,
-    materials: Array<{ material_id: string; quantity: number }>,
+    materials: Array<{ material_id: string; quantity: number; unit: string }>,
     approvalNotes?: string
   ): Promise<Request> {
     // Validate materials
@@ -32,9 +32,9 @@ export class RequestService {
     }
 
     for (const item of materials) {
-      if (!item.material_id || item.quantity <= 0) {
+      if (!item.material_id || item.quantity <= 0 || !item.unit) {
         throw new ValidationError(
-          'Each material must have material_id and positive quantity'
+          'Each material must have material_id, positive quantity, and unit'
         );
       }
     }
@@ -125,7 +125,7 @@ export class RequestService {
    */
   async updateRequest(
     id: string,
-    materials: Array<{ material_id: string; quantity: number }>
+    materials: Array<{ material_id: string; quantity: number; unit: string }>
   ): Promise<Request> {
     const request = await this.getRequestById(id);
 
@@ -140,9 +140,9 @@ export class RequestService {
     }
 
     for (const item of materials) {
-      if (!item.material_id || item.quantity <= 0) {
+      if (!item.material_id || item.quantity <= 0 || !item.unit) {
         throw new ValidationError(
-          'Each material must have material_id and positive quantity'
+          'Each material must have material_id, positive quantity, and unit'
         );
       }
     }

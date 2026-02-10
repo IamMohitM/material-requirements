@@ -87,4 +87,22 @@ export const projectsApi = {
     );
     return response.data.data;
   },
+
+  /**
+   * Update a project
+   */
+  updateProject: async (id: string, data: CreateProjectRequest): Promise<Project> => {
+    const response = await api.put<{ success: boolean; data: Project }>(
+      `/api/v1/projects/${id}`,
+      data
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Delete a project
+   */
+  deleteProject: async (id: string): Promise<void> => {
+    await api.delete(`/api/v1/projects/${id}`);
+  },
 };

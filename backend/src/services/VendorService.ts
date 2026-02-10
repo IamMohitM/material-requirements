@@ -30,16 +30,14 @@ export class VendorService {
    */
   async createVendor(
     name: string,
-    contact_person: string,
-    email: string,
-    phone: string,
+    contact_person?: string,
+    email?: string,
+    phone?: string,
     address?: string | Record<string, unknown>,
-    payment_terms?: string
+    is_active: boolean = true
   ): Promise<Vendor> {
-    if (!name || !email || !phone) {
-      throw new ValidationError(
-        'Vendor name, email, and phone are required'
-      );
+    if (!name) {
+      throw new ValidationError('Vendor name is required');
     }
 
     const addressStr = typeof address === 'string'
@@ -54,7 +52,7 @@ export class VendorService {
       phone,
       address: addressStr,
       rating: 0,
-      is_active: true,
+      is_active,
     });
 
     await this.getVendorRepository().save(vendor);

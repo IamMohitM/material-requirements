@@ -118,8 +118,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           // Only one matching option - auto-select it
           handleSelect(options[0]);
         } else if (options.length > 0) {
-          // Multiple options but none highlighted - highlight first one
-          setHighlightedIndex(0);
+          // Multiple options - auto-select the first one
+          handleSelect(options[0]);
         } else if (canCreate && inputValue.trim()) {
           // No matching options - create new if allowed
           handleCreateNew();

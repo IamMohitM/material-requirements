@@ -37,39 +37,30 @@ export const updateProjectSchema = createProjectSchema.fork(
 export const createMaterialSchema = Joi.object({
   name: Joi.string().min(3).max(255).required(),
   description: Joi.string().max(1000).optional(),
-  unit: Joi.string().max(50).required(),
-  category: Joi.string().max(100).required(),
+  unit: Joi.string().max(50).optional(),
+  category: Joi.string().max(100).optional(),
   min_stock: Joi.number().integer().positive().optional(),
   standard_cost: Joi.number().positive().optional(),
   is_active: Joi.boolean().default(true),
 });
 
 export const updateMaterialSchema = createMaterialSchema.fork(
-  ['name', 'unit', 'category'],
+  ['name'],
   (schema) => schema.optional()
 );
 
 // Vendors
 export const createVendorSchema = Joi.object({
   name: Joi.string().min(3).max(255).required(),
-  contact_person: Joi.string().max(255).required(),
-  email: Joi.string().email().required(),
-  phone: Joi.string().max(20).required(),
-  address: Joi.object().required(),
-  gstin: Joi.string().max(50).optional(),
-  payment_terms: Joi.string().max(100).required(),
+  contact_person: Joi.string().max(255).optional(),
+  email: Joi.string().email().optional(),
+  phone: Joi.string().max(20).optional(),
+  address: Joi.string().max(500).optional(),
   is_active: Joi.boolean().default(true),
 });
 
 export const updateVendorSchema = createVendorSchema.fork(
-  [
-    'name',
-    'contact_person',
-    'email',
-    'phone',
-    'address',
-    'payment_terms',
-  ],
+  ['name'],
   (schema) => schema.optional()
 );
 
@@ -81,6 +72,7 @@ export const createRequestSchema = Joi.object({
       Joi.object({
         material_id: Joi.string().uuid().required(),
         quantity: Joi.number().positive().required(),
+        unit: Joi.string().required(),
       })
     )
     .min(1)
@@ -94,6 +86,7 @@ export const updateRequestSchema = Joi.object({
       Joi.object({
         material_id: Joi.string().uuid().required(),
         quantity: Joi.number().positive().required(),
+        unit: Joi.string().required(),
       })
     )
     .min(1)

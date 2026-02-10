@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
+import { RootState } from '../store/store';
 import { authService } from '../services/auth';
 import { setUser, setTokens, setError } from '../store/slices/authSlice';
 import '../styles/LoginPage.css';
@@ -13,6 +14,51 @@ function LoginPage() {
   const [error, setErrorState] = useState<string | null>(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const [hasAttemptedAutoLogin, setHasAttemptedAutoLogin] = useState(false);
+
+  // Auto-login function wrapped in useCallback
+  const performAutoLogin = useCallback(async () => {
+    setIsLoading(true);
+    setErrorState(null);
+
+    try {
+      const response = await authService.login('admin@demo.com', 'demo123456');
+
+      if (response.success) {
+        dispatch(setUser(response.data.user));
+        dispatch(
+          setTokens({
+            accessToken: response.data.access_token,
+            refreshToken: response.data.refresh_token,
+          })
+        );
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      // If auto-login fails, show the form so user can try manually
+      setErrorState(
+        err.response?.data?.error?.message || 'Auto-login failed. Please login manually.'
+      );
+      dispatch(setError(err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch, navigate]);
+
+  // Auto-login in development mode
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+      return;
+    }
+
+    // Auto-login only once in development mode
+    if (process.env.NODE_ENV === 'development' && !hasAttemptedAutoLogin) {
+      setHasAttemptedAutoLogin(true);
+      performAutoLogin();
+    }
+  }, [isAuthenticated, hasAttemptedAutoLogin, navigate, performAutoLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

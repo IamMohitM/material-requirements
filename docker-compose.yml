@@ -3,21 +3,30 @@ services:
   db:
     image: postgres:15-alpine
     container_name: mrms-db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1024M
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      # Use 'app' as the default user to match what the application expects
+      # This ensures the role exists from the start
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: mrms
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    # Enhanced health check that uses the correct user role
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U app -d mrms"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - mrms-network
 
@@ -25,6 +34,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: mrms-redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 256M
     ports:
       - "6379:6379"
     volumes:
@@ -64,6 +78,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mrms-api
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 2048M
     environment:
       NODE_ENV: development
       API_PORT: 3000
@@ -97,6 +116,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: mrms-web
+    deploy:
+      resources:
+        limits:
+          cpus: '0.40'
+          memory: 768M
     environment:
       REACT_APP_API_URL: http://localhost:3000
       REACT_APP_ENV: development

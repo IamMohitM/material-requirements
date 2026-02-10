@@ -35,6 +35,7 @@ export class Request {
   materials: Array<{
     material_id: string;
     quantity: number;
+    unit: string;
   }>;
 
   @Column({ type: 'uuid', nullable: true })

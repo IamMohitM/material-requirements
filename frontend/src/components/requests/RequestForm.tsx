@@ -7,6 +7,8 @@ import { fetchProjects, searchProjects, createProject } from '../../store/slices
 import { fetchMaterials, searchMaterials, createMaterial } from '../../store/slices/materialsSlice';
 import { SearchableSelect } from '../common/SearchableSelect';
 import { CreateItemModal } from '../common/CreateItemModal';
+import { UnitSelector } from '../common/UnitSelector';
+import { UNIT_OPTIONS, MATERIAL_CATEGORIES } from '../../utils/unitConstants';
 import { Project } from '../../services/projectsApi';
 
 interface RequestFormProps {
@@ -23,6 +25,7 @@ interface FormData {
 interface MaterialLineItem {
   material_id: string;
   quantity: number;
+  unit?: string;
   material_name?: string;
 }
 
@@ -40,7 +43,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
   const { user } = useAppSelector((state) => state.auth);
 
   const [materials_list, setMaterials] = useState<MaterialLineItem[]>([
-    { material_id: '', quantity: 0 },
+    { material_id: '', quantity: 0, unit: '' },
   ]);
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -65,11 +68,11 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
 
   const onSubmit = async (data: FormData) => {
     const validMaterials = materials_list.filter(
-      (item) => item.material_id && item.quantity > 0
+      (item) => item.material_id && item.quantity > 0 && item.unit
     );
 
     if (validMaterials.length === 0) {
-      alert('Please add at least one material');
+      alert('Please add at least one material with quantity and unit');
       return;
     }
 
@@ -78,6 +81,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
       materials: validMaterials.map((m) => ({
         material_id: m.material_id,
         quantity: m.quantity,
+        unit: m.unit,
       })),
     };
 
@@ -93,7 +97,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
 
       if (result.meta.requestStatus === 'fulfilled') {
         reset();
-        setMaterials([{ material_id: '', quantity: 0 }]);
+        setMaterials([{ material_id: '', quantity: 0, unit: '' }]);
         setSelectedProject(null);
         onSuccess();
       }
@@ -123,16 +127,22 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
   };
 
   const handleCreateProject = async (projectData: any) => {
-    const result = await dispatch(
-      createProject({
-        name: projectData.name,
-        description: projectData.description,
-        start_date: projectData.start_date,
-        end_date: projectData.end_date,
-        budget: parseFloat(projectData.budget),
-        status: projectData.status || 'planning',
-      })
-    );
+    const payload: any = {
+      name: projectData.name,
+      start_date: projectData.start_date,
+      budget: parseFloat(projectData.budget),
+      status: projectData.status || 'planning',
+    };
+
+    // Only add optional fields if they have values
+    if (projectData.description?.trim()) {
+      payload.description = projectData.description.trim();
+    }
+    if (projectData.end_date) {
+      payload.end_date = projectData.end_date;
+    }
+
+    const result = await dispatch(createProject(payload));
 
     if (result.meta.requestStatus === 'fulfilled') {
       setSelectedProject(result.payload as Project);
@@ -141,14 +151,22 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
   };
 
   const handleCreateMaterial = async (materialData: any) => {
-    const result = await dispatch(
-      createMaterial({
-        name: materialData.name,
-        description: materialData.description,
-        unit: materialData.unit,
-        category: materialData.category,
-      })
-    );
+    const payload: any = {
+      name: materialData.name,
+    };
+
+    // Only add optional fields if they have values
+    if (materialData.description?.trim()) {
+      payload.description = materialData.description.trim();
+    }
+    if (materialData.unit) {
+      payload.unit = materialData.unit;
+    }
+    if (materialData.category) {
+      payload.category = materialData.category;
+    }
+
+    const result = await dispatch(createMaterial(payload));
 
     if (result.meta.requestStatus === 'fulfilled') {
       setShowCreateMaterial(false);
@@ -157,7 +175,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
   };
 
   const addMaterial = () => {
-    setMaterials([...materials_list, { material_id: '', quantity: 0 }]);
+    setMaterials([...materials_list, { material_id: '', quantity: 0, unit: '' }]);
   };
 
   const removeMaterial = (index: number) => {
@@ -235,7 +253,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
               {materials_list.map((item, index) => (
                 <div key={index} className="mb-3 p-3 border rounded">
                   <div className="row">
-                    <div className="col-md-8 mb-2">
+                    <div className="col-md-6 mb-2">
                       <Form.Label>Material *</Form.Label>
                       <SearchableSelect
                         placeholder="Search materials..."
@@ -267,13 +285,13 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
                       <Form.Text className="text-muted d-block mt-1">
                         {materialsLoading ? 'Loading...' : `${materialOptions.length} options available`}
                       </Form.Text>
-                      {!item.material_id && item.quantity <= 0 && (
+                      {!item.material_id && (
                         <Form.Text className="text-danger d-block mt-1">
-                          ⚠️ Material is required - select from dropdown or type and press Enter
+                          Material is required
                         </Form.Text>
                       )}
                     </div>
-                    <div className="col-md-3 mb-2">
+                    <div className="col-md-2 mb-2">
                       <Form.Label>Quantity *</Form.Label>
                       <Form.Control
                         type="number"
@@ -288,7 +306,18 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
                         <Form.Text className="text-danger">Quantity must be greater than 0</Form.Text>
                       )}
                     </div>
-                    <div className="col-md-1 mb-2 d-flex align-items-end">
+                    <div className="col-md-2 mb-2">
+                      <Form.Label>Unit *</Form.Label>
+                      <UnitSelector
+                        value={item.unit}
+                        onChange={(unit) => updateMaterial(index, 'unit', unit)}
+                        isInvalid={!!(item.material_id && !item.unit)}
+                      />
+                      {item.material_id && !item.unit && (
+                        <Form.Text className="text-danger">Unit is required</Form.Text>
+                      )}
+                    </div>
+                    <div className="col-md-2 mb-2 d-flex align-items-end">
                       <Button
                         variant="outline-danger"
                         size="sm"
@@ -300,6 +329,11 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
                       </Button>
                     </div>
                   </div>
+                  {item.material_id && item.quantity > 0 && item.unit && (
+                    <Form.Text className="text-success d-block mt-2">
+                      ✓ {item.quantity} {item.unit}
+                    </Form.Text>
+                  )}
                 </div>
               ))}
               <Button variant="outline-secondary" onClick={addMaterial} className="mb-3">
@@ -361,10 +395,20 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
         title="Material"
         isLoading={materialsLoading}
         fields={[
-          { name: 'name', label: 'Material Name', type: 'text', required: true },
+          { name: 'name', label: 'Material Name *', type: 'text', required: true },
           { name: 'description', label: 'Description', type: 'textarea' },
-          { name: 'unit', label: 'Unit of Measure', type: 'text', required: true },
-          { name: 'category', label: 'Category', type: 'text', required: true },
+          {
+            name: 'unit',
+            label: 'Unit of Measure',
+            type: 'select',
+            options: UNIT_OPTIONS.map((u) => ({ value: u.value, label: u.label })),
+          },
+          {
+            name: 'category',
+            label: 'Category',
+            type: 'select',
+            options: MATERIAL_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
+          },
         ]}
       />
     </>

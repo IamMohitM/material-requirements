@@ -51,7 +51,14 @@ router.post(
   requireRole(UserRole.ADMIN, UserRole.FINANCE_OFFICER),
   validateBody(createVendorSchema),
   asyncHandler(async (req, res) => {
-    const { name, contact_person, email, phone, address, payment_terms } = req.body;
+    const {
+      name,
+      contact_person,
+      email,
+      phone,
+      address,
+      is_active = true,
+    } = req.body;
 
     const vendor = await vendorService.createVendor(
       name,
@@ -59,7 +66,7 @@ router.post(
       email,
       phone,
       address,
-      payment_terms
+      is_active
     );
 
     const response: ApiResponse = {
