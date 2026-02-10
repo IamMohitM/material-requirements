@@ -25,20 +25,36 @@ export const dataSourceOptions: DataSourceOptions = {
 export const AppDataSource = new DataSource(dataSourceOptions);
 
 /**
- * Initialize database connection
+ * Initialize database connection with retry logic
  * Note: Migrations are run separately via 'npm run migrate' to avoid connection pool issues
  */
-export async function initializeDatabase() {
-  try {
-    if (!AppDataSource.isInitialized) {
-      console.log('Initializing database connection...');
-      await AppDataSource.initialize();
-      console.log('✓ Database connection established');
+export async function initializeDatabase(maxRetries = 30) {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (!AppDataSource.isInitialized) {
+        console.log(`Initializing database connection (attempt ${attempt}/${maxRetries})...`);
+        await AppDataSource.initialize();
+        console.log('✓ Database connection established');
+        return;
+      }
+    } catch (error) {
+      lastError = error;
+      console.warn(`✗ Attempt ${attempt} failed to connect to database:`,
+        (error as any)?.message || error);
+
+      if (attempt < maxRetries) {
+        // Wait before retrying (exponential backoff: 1s, 2s, 3s, etc.)
+        const delay = Math.min(attempt * 1000, 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-  } catch (error) {
-    console.error('✗ Failed to initialize database:', error);
-    process.exit(1);
   }
+
+  // If we've exhausted all retries, log and exit
+  console.error('✗ Failed to initialize database after', maxRetries, 'attempts:', lastError);
+  process.exit(1);
 }
 
 /**
