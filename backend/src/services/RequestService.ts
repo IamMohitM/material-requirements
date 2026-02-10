@@ -1,6 +1,7 @@
 import { AppDataSource } from '@config/database';
 import { Request } from '@entities/Request';
 import { Project } from '@entities/Project';
+import { Material } from '@entities/Material';
 import { NotFoundError, ValidationError, BadRequestError } from '@utils/errors';
 import {
   generateId,
@@ -21,6 +22,10 @@ export class RequestService {
 
   private getProjectRepository() {
     return AppDataSource.getRepository(Project);
+  }
+
+  private getMaterialRepository() {
+    return AppDataSource.getRepository(Material);
   }
 
   /**
@@ -65,7 +70,7 @@ export class RequestService {
   /**
    * Get request by ID
    */
-  async getRequestById(id: string): Promise<Request> {
+  async getRequestById(id: string): Promise<Request & { project_name?: string | null }> {
     const request = await this.getRequestRepository().findOne({
       where: { id },
     });
@@ -74,7 +79,40 @@ export class RequestService {
       throw new NotFoundError('Request', id);
     }
 
-    return request;
+    // Look up project name
+    let projectName: string | null = null;
+    if (request.project_id) {
+      const project = await this.getProjectRepository().findOne({
+        select: ['id', 'name'],
+        where: { id: request.project_id },
+      });
+      projectName = project?.name || null;
+    }
+
+    const materialIds = (request.materials || [])
+      .map((item) => item.material_id)
+      .filter((materialId) => !!materialId);
+
+    let enrichedMaterials = request.materials || [];
+    if (materialIds.length > 0) {
+      const materials = await this.getMaterialRepository().find({
+        select: ['id', 'name'],
+        where: { id: In(materialIds) },
+      });
+
+      const materialNameById = new Map(materials.map((material) => [material.id, material.name]));
+
+      enrichedMaterials = request.materials.map((item) => ({
+        ...item,
+        material_name: materialNameById.get(item.material_id) || null,
+      }));
+    }
+
+    return {
+      ...request,
+      project_name: projectName,
+      materials: enrichedMaterials,
+    } as Request & { project_name?: string | null };
   }
 
   /**

@@ -79,8 +79,10 @@ export const RequestForm: React.FC<RequestFormProps> = ({ show, onClose, onSucce
 
     const payload: any = {
       project_id: selectedProject?.id || data.project_id,
+      project_name: selectedProject?.name,
       materials: validMaterials.map((m) => ({
         material_id: m.material_id,
+        material_name: m.material_name,
         quantity: m.quantity,
         unit: m.unit,
       })),

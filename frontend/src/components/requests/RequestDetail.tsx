@@ -1,5 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Card, Badge, Table, Button, Alert } from 'react-bootstrap';
 import { Request } from '../../store/slices/requestsSlice';
+import { fetchMaterials } from '../../store/slices/materialsSlice';
+import { useAppDispatch, useAppSelector } from '../../hooks/redux';
+import { materialsApi } from '../../services/materialsApi';
 
 interface RequestDetailProps {
   request: Request | null;
@@ -14,6 +18,68 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
   onApprove,
   onReject,
 }) => {
+  const dispatch = useAppDispatch();
+  const { materials } = useAppSelector((state) => state.materials);
+  const [materialNames, setMaterialNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (materials.length === 0) {
+      dispatch(fetchMaterials({ pageSize: 200 }));
+    }
+  }, [dispatch, materials.length]);
+
+  useEffect(() => {
+    if (materials.length === 0) return;
+    setMaterialNames((prev) => {
+      const next = { ...prev };
+      for (const material of materials) {
+        next[material.id] = material.name;
+      }
+      return next;
+    });
+  }, [materials]);
+
+  useEffect(() => {
+    if (!request?.materials || request.materials.length === 0) return;
+    const missingIds = request.materials
+      .map((item) => item.material_id)
+      .filter((id) => !materialNames[id]);
+
+    if (missingIds.length === 0) return;
+
+    let isActive = true;
+
+    Promise.all(
+      missingIds.map(async (id) => {
+        try {
+          const material = await materialsApi.getMaterialById(id);
+          return { id: material.id, name: material.name };
+        } catch {
+          return null;
+        }
+      })
+    ).then((results) => {
+      if (!isActive) return;
+      setMaterialNames((prev) => {
+        const next = { ...prev };
+        for (const result of results) {
+          if (result) {
+            next[result.id] = result.name;
+          }
+        }
+        return next;
+      });
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [request?.materials, materialNames]);
+
+  const materialNameById = useMemo(() => {
+    return new Map(Object.entries(materialNames));
+  }, [materialNames]);
+
   if (!request) return null;
 
   const getStatusBadge = (status: string) => {
@@ -88,7 +154,7 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
           <Table bordered size="sm">
             <thead>
               <tr>
-                <th>Material ID</th>
+                <th>Material</th>
                 <th style={{ textAlign: 'right' }}>Quantity</th>
               </tr>
             </thead>
@@ -96,7 +162,11 @@ export const RequestDetail: React.FC<RequestDetailProps> = ({
               {request.materials && request.materials.length > 0 ? (
                 request.materials.map((item, idx) => (
                   <tr key={idx}>
-                    <td>{item.material_id}</td>
+                    <td>
+                      {item.material_name ||
+                        materialNameById.get(item.material_id) ||
+                        item.material_id}
+                    </td>
                     <td style={{ textAlign: 'right' }}>{item.quantity}</td>
                   </tr>
                 ))
