@@ -21,5 +21,7 @@ async function runMigrations() {
   }
 }
 
-// Run migrations when this file is executed directly
-runMigrations();
+// Run migrations only when this file is executed directly (not imported)
+if (require.main === module) {
+  runMigrations();
+}
