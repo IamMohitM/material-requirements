@@ -1,44 +1,63 @@
 import { useState } from 'react';
 import { Container } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { DeliveryList } from '../components/deliveries/DeliveryList';
-import { DeliveryForm } from '../components/deliveries/DeliveryForm';
+import { DeliveryList, DeliveryForm, DeliveryDetail } from '../components/deliveries';
 import { Delivery } from '../store/slices/deliveriesSlice';
 
-export const DeliveriesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [showCreateForm, setShowCreateForm] = useState(false);
+export const DeliveriesPage = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateClick = () => {
-    setShowCreateForm(true);
+    setShowForm(true);
   };
 
   const handleFormClose = () => {
-    setShowCreateForm(false);
+    setShowForm(false);
   };
 
   const handleFormSuccess = () => {
-    setShowCreateForm(false);
+    setRefreshKey((prev) => prev + 1);
   };
 
   const handleRowClick = (delivery: Delivery) => {
-    navigate(`/deliveries/${delivery.id}`);
+    setSelectedDelivery(delivery);
   };
 
+  const handleDetailClose = () => {
+    setSelectedDelivery(null);
+  };
+
+  const handleDetailUpdate = () => {
+    setSelectedDelivery(null);
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  if (selectedDelivery) {
+    return (
+      <Container className="py-4">
+        <DeliveryDetail
+          deliveryId={selectedDelivery.id}
+          onClose={handleDetailClose}
+          onUpdate={handleDetailUpdate}
+        />
+      </Container>
+    );
+  }
+
   return (
-    <Container fluid className="py-5">
+    <Container className="py-4">
       <DeliveryList
+        key={refreshKey}
         onCreateClick={handleCreateClick}
         onRowClick={handleRowClick}
       />
 
       <DeliveryForm
-        show={showCreateForm}
+        show={showForm}
         onClose={handleFormClose}
         onSuccess={handleFormSuccess}
       />
     </Container>
   );
 };
-
-export default DeliveriesPage;

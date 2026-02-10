@@ -8,7 +8,7 @@ import RequestsPage from './pages/RequestsPage';
 import QuotesPage from './pages/QuotesPage';
 import POsPage from './pages/POsPage';
 import VendorsPage from './pages/VendorsPage';
-import DeliveriesPage from './pages/DeliveriesPage';
+import { DeliveriesPage } from './pages/DeliveriesPage';
 import InvoicesPage from './pages/InvoicesPage';
 import { Layout } from './components/layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';

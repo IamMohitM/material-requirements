@@ -1,56 +1,93 @@
-import { api } from './api';
-import { Delivery, DeliveryFilters } from '../store/slices/deliveriesSlice';
+import api from './api';
+import { DeliveryFilters } from '../store/slices/deliveriesSlice';
+
+export interface DeliveryLineItem {
+  po_line_item_id: string;
+  material_id: string;
+  quantity_ordered: number;
+  quantity_good: number;
+  quantity_damaged: number;
+  damage_notes?: string;
+  brand_received?: string;
+  brand_ordered?: string;
+}
+
+export interface CreateDeliveryPayload {
+  po_id: string;
+  line_items: DeliveryLineItem[];
+  received_by_id: string;
+  delivery_date: string;
+  location?: string;
+  location_details?: string;
+  notes?: string;
+  photos?: any[];
+}
+
+export interface UpdateDeliveryPayload {
+  line_items?: DeliveryLineItem[];
+  location?: string;
+  location_details?: string;
+  notes?: string;
+  photos?: any[];
+}
 
 export const deliveriesApi = {
-  async listDeliveries(page: number = 1, pageSize: number = 20, filters?: DeliveryFilters) {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      pageSize: pageSize.toString(),
-      ...(filters?.poId && { poId: filters.poId }),
-      ...(filters?.status && { status: filters.status }),
-      ...(filters?.searchTerm && { search: filters.searchTerm }),
-      ...(filters?.dateRange && {
-        dateFrom: filters.dateRange[0],
-        dateTo: filters.dateRange[1],
-      }),
-    });
+  /**
+   * Get all deliveries with pagination and filtering
+   */
+  listDeliveries: async (page: number = 1, pageSize: number = 20, filters?: DeliveryFilters) => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+
+    if (filters?.status) {
+      params.append('status', filters.status);
+    }
+    if (filters?.poId) {
+      params.append('po_id', filters.poId);
+    }
 
     const response = await api.get(`/api/v1/deliveries?${params.toString()}`);
-    return {
-      data: response.data.data,
-      total: response.data.meta?.total || 0,
-    };
+    return response.data;
   },
 
-  async getDelivery(id: string) {
+  /**
+   * Get a specific delivery by ID
+   */
+  getDelivery: async (id: string) => {
     const response = await api.get(`/api/v1/deliveries/${id}`);
-    return response.data.data;
+    return response.data.data || response.data;
   },
 
-  async createDelivery(
-    data: Omit<Delivery, 'id' | 'delivery_number' | 'created_at' | 'updated_at'>
-  ) {
-    const response = await api.post('/api/v1/deliveries', {
-      po_id: data.po_id,
-      delivery_date: data.delivery_date,
-      received_by_id: data.received_by_id,
-      delivery_location: data.delivery_location,
-      line_items: data.line_items,
-    });
-    return response.data.data;
+  /**
+   * Create a new delivery receipt
+   */
+  createDelivery: async (payload: any) => {
+    const response = await api.post('/api/v1/deliveries', payload);
+    return response.data.data || response.data;
   },
 
-  async updateDelivery(id: string, data: Partial<Delivery>) {
-    const response = await api.put(`/api/v1/deliveries/${id}`, data);
-    return response.data.data;
+  /**
+   * Update a delivery (only in PENDING status)
+   */
+  updateDelivery: async (id: string, payload: any) => {
+    const response = await api.put(`/api/v1/deliveries/${id}`, payload);
+    return response.data.data || response.data;
   },
 
-  async completeDelivery(id: string) {
-    const response = await api.post(`/api/v1/deliveries/${id}/complete`);
-    return response.data.data;
+  /**
+   * Delete a delivery (only in PENDING status)
+   */
+  deleteDelivery: async (id: string) => {
+    const response = await api.delete(`/api/v1/deliveries/${id}`);
+    return response.data;
   },
 
-  async deleteDelivery(id: string) {
-    await api.delete(`/api/v1/deliveries/${id}`);
+  /**
+   * Mark a delivery as COMPLETE
+   */
+  completeDelivery: async (id: string) => {
+    const response = await api.post(`/api/v1/deliveries/${id}/complete`, {});
+    return response.data.data || response.data;
   },
 };
