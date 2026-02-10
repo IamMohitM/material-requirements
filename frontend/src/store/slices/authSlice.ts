@@ -16,11 +16,14 @@ interface AuthState {
   error: string | null;
 }
 
+// In development mode, don't restore from localStorage - always force fresh auto-login
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const initialState: AuthState = {
   user: null,
-  accessToken: localStorage.getItem('accessToken'),
-  refreshToken: localStorage.getItem('refreshToken'),
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  accessToken: isDevelopment ? null : localStorage.getItem('accessToken'),
+  refreshToken: isDevelopment ? null : localStorage.getItem('refreshToken'),
+  isAuthenticated: isDevelopment ? false : !!localStorage.getItem('accessToken'),
   isLoading: false,
   error: null,
 };

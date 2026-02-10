@@ -48,15 +48,18 @@ function LoginPage() {
 
   // Auto-login in development mode
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-      return;
-    }
-
-    // Auto-login only once in development mode
+    // In development, always try to auto-login as admin, even if supposedly authenticated
+    // This ensures fresh user data on every refresh
     if (process.env.NODE_ENV === 'development' && !hasAttemptedAutoLogin) {
       setHasAttemptedAutoLogin(true);
       performAutoLogin();
+      return;
+    }
+
+    // If already has fresh user data and authenticated, go to dashboard
+    if (isAuthenticated && hasAttemptedAutoLogin) {
+      navigate('/dashboard');
+      return;
     }
   }, [isAuthenticated, hasAttemptedAutoLogin, navigate, performAutoLogin]);
 

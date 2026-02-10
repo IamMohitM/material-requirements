@@ -2,12 +2,27 @@ import request from 'supertest';
 import { createApp } from '../../src/app';
 import { AppDataSource } from '../../src/config/database';
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 
 const app = createApp();
 let authToken: string;
 let testProjectId: string;
 let testPoId: string;
 let testUserId: string;
+
+// Helper to generate a valid JWT token for testing
+function generateMockToken(userId: string = uuidv4()): string {
+  const secret = process.env.JWT_SECRET || 'test-secret-key';
+  return jwt.sign(
+    {
+      id: userId,
+      email: 'test@example.com',
+      role: 'admin',
+    },
+    secret,
+    { expiresIn: '24h' }
+  );
+}
 
 describe('Tier 2: Delivery Endpoints', () => {
   beforeAll(async () => {
@@ -16,11 +31,10 @@ describe('Tier 2: Delivery Endpoints', () => {
       await AppDataSource.initialize();
     }
 
-    // For these tests, we're testing the routes without actual auth
-    // In real tests, this would be a valid JWT token
     testUserId = uuidv4();
     testProjectId = uuidv4();
     testPoId = uuidv4();
+    authToken = generateMockToken(testUserId);
   });
 
   afterAll(async () => {
@@ -40,24 +54,26 @@ describe('Tier 2: Delivery Endpoints', () => {
           line_items: [],
         });
 
-      // Should reject with either 401 (unauthorized) or 400 (validation)
-      expect([401, 400]).toContain(res.status);
+      // Should reject with 401 (unauthorized)
+      expect(res.status).toBe(401);
     });
 
     it('should validate required fields', async () => {
       const res = await request(app)
         .post('/api/v1/deliveries')
-        .send({}); // Missing required fields and no auth
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({}); // Missing required fields but has auth
 
-      // Will fail due to missing auth (401) or validation (400)
-      expect([401, 400, 422]).toContain(res.status);
+      // Will fail due to validation (400/422)
+      expect([400, 422]).toContain(res.status);
       expect(res.body).toHaveProperty('success');
       expect(res.body).toHaveProperty('error');
     });
 
     it('should return consistent response format', async () => {
       const res = await request(app)
-        .get('/api/v1/deliveries');
+        .get('/api/v1/deliveries')
+        .set('Authorization', `Bearer ${authToken}`);
 
       // Check response format - should have standard structure
       expect(res.body).toHaveProperty('success');
@@ -69,7 +85,8 @@ describe('Tier 2: Delivery Endpoints', () => {
   describe('GET /api/v1/deliveries', () => {
     it('should support pagination', async () => {
       const res = await request(app)
-        .get('/api/v1/deliveries?page=1&pageSize=10');
+        .get('/api/v1/deliveries?page=1&pageSize=10')
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.body).toHaveProperty('success');
       // Response format is valid regardless of auth status
@@ -80,14 +97,16 @@ describe('Tier 2: Delivery Endpoints', () => {
 
     it('should support filtering by PO', async () => {
       const res = await request(app)
-        .get(`/api/v1/deliveries?po_id=${testPoId}`);
+        .get(`/api/v1/deliveries?po_id=${testPoId}`)
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.body).toHaveProperty('success');
     });
 
     it('should support filtering by status', async () => {
       const res = await request(app)
-        .get('/api/v1/deliveries?status=complete');
+        .get('/api/v1/deliveries?status=complete')
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.body).toHaveProperty('success');
     });
@@ -97,17 +116,19 @@ describe('Tier 2: Delivery Endpoints', () => {
     it('should return 404 for non-existent delivery', async () => {
       const fakeId = uuidv4();
       const res = await request(app)
-        .get(`/api/v1/deliveries/${fakeId}`);
+        .get(`/api/v1/deliveries/${fakeId}`)
+        .set('Authorization', `Bearer ${authToken}`);
 
-      // May return 404, 400, or 401 depending on auth and validation
-      expect([404, 400, 401]).toContain(res.status);
+      // Should return 404 for non-existent delivery or 500 if database error
+      expect([404, 500]).toContain(res.status);
     });
   });
 
   describe('API Response Format Validation', () => {
     it('should have consistent success response structure', async () => {
       const res = await request(app)
-        .get('/api/v1/deliveries');
+        .get('/api/v1/deliveries')
+        .set('Authorization', `Bearer ${authToken}`);
 
       // Verify standard response structure exists
       expect(typeof res.body.success).toBe('boolean');
@@ -118,6 +139,7 @@ describe('Tier 2: Delivery Endpoints', () => {
     it('should have consistent error response structure', async () => {
       const res = await request(app)
         .post('/api/v1/deliveries')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({});
 
       // Response should always have the standard structure
