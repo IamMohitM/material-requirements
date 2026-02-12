@@ -29,7 +29,7 @@ export class Quote {
   quote_date: Date;
 
   @Column({ type: 'date' })
-  validity_date: Date;
+  valid_until: Date;
 
   @Column({
     type: 'enum',
@@ -49,17 +49,17 @@ export class Quote {
     delivery_time: number;
   }>;
 
-  @Column({ type: 'varchar', length: 100 })
-  payment_terms: string;
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
 
-  @Column({ type: 'varchar', length: 500 })
-  delivery_location: string;
-
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  document_url?: string;
+  @Column({ type: 'uuid', nullable: true })
+  submitted_by_id?: string;
 
   @Column({ type: 'timestamp', nullable: true })
-  received_at?: Date;
+  submitted_at?: Date;
+
+  @Column({ type: 'boolean', default: true })
+  is_active?: boolean;
 
   @CreateDateColumn()
   created_at: Date;

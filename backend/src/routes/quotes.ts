@@ -52,16 +52,13 @@ router.post(
   requireRole(UserRole.FINANCE_OFFICER, UserRole.ADMIN, UserRole.APPROVER),
   validateBody(createQuoteSchema),
   asyncHandler(async (req, res) => {
-    const { request_id, vendor_id, line_items, total_amount, payment_terms, delivery_location } =
-      req.body;
+    const { request_id, vendor_id, line_items, total_amount } = req.body;
 
     const quote = await quoteService.createQuote(
       request_id,
       vendor_id,
       line_items,
       total_amount,
-      payment_terms,
-      delivery_location,
       30
     );
 
@@ -216,10 +213,8 @@ router.get(
         quote_number: q.quote_number,
         vendor_id: q.vendor_id,
         total_amount: q.total_amount,
-        payment_terms: q.payment_terms,
-        delivery_location: q.delivery_location,
-        validity_date: q.validity_date,
         status: q.status,
+        valid_until: q.valid_until,
         line_items: q.line_items,
       })),
       lowest_price: sortedQuotes.length > 0 ? sortedQuotes[0].total_amount : null,

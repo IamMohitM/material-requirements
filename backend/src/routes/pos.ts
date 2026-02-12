@@ -46,7 +46,7 @@ router.get(
 
 /**
  * POST /api/v1/pos
- * Create a new purchase order from a quote
+ * Create a new purchase order from a request (with or without quote)
  */
 router.post(
   '/',
@@ -54,26 +54,65 @@ router.post(
   requireRole(UserRole.APPROVER, UserRole.FINANCE_OFFICER, UserRole.ADMIN),
   validateBody(createPOSchema),
   asyncHandler(async (req, res) => {
-    const { request_id, quote_id, special_instructions, delivery_address } = req.body;
+    const { request_id, vendor_id, quote_id, special_instructions, delivery_address } = req.body;
 
-    // Get request and quote details to extract information
     const { requestService } = await import('@services/index');
-    const { quoteService } = await import('@services/index');
 
     const request = await requestService.getRequestById(request_id);
-    const quote = await quoteService.getQuoteById(quote_id);
+
+    // Determine vendor and line items based on whether quote is provided
+    let finalVendorId: string;
+    let finalLineItems: any[];
+    let finalTotalAmount: number;
+
+    if (quote_id) {
+      // If quote provided, use quote details
+      const { quoteService } = await import('@services/index');
+      const quote = await quoteService.getQuoteById(quote_id);
+      finalVendorId = quote.vendor_id;
+      finalLineItems = quote.line_items;
+      finalTotalAmount = quote.total_amount;
+    } else {
+      // If no quote, vendor and line items must be in request body
+      if (!vendor_id) {
+        res.status(400).json({
+          success: false,
+          data: null,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Either quote_id or vendor_id must be provided',
+          },
+        });
+        return;
+      }
+
+      // Use request materials as line items with default pricing
+      finalVendorId = vendor_id;
+      finalLineItems = (request.materials || []).map((mat: any) => ({
+        material_id: mat.material_id,
+        material_name: mat.material_name,
+        quantity: mat.quantity,
+        unit: mat.unit,
+        unit_price: 0, // Will be filled in by user in frontend
+        discount_percent: 0,
+        gst_amount: 0,
+        total: 0,
+      }));
+      finalTotalAmount = 0; // Will be calculated once user enters prices
+    }
+
+    // Import generateId for placeholder quote_id
+    const { generateId } = await import('@utils/helpers');
 
     const po = await poService.createPO(
       request.project_id,
       request_id,
-      quote.vendor_id,
-      quote_id,
-      quote.line_items,
-      quote.total_amount,
-      new Date(), // delivery date - use submitted_at from request
+      finalVendorId,
+      finalLineItems,
+      finalTotalAmount,
+      new Date(),
       req.user!.id,
-      delivery_address,
-      special_instructions
+      quote_id || generateId() // Use placeholder UUID if no quote provided
     );
 
     const response: ApiResponse = {

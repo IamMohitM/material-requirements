@@ -28,8 +28,6 @@ export class QuoteService {
     vendor_id: string,
     line_items: any[],
     total_amount: number,
-    payment_terms?: string,
-    delivery_location?: string,
     valid_days: number = 30
   ): Promise<Quote> {
     if (!request_id || !vendor_id || !line_items || line_items.length === 0) {
@@ -38,20 +36,19 @@ export class QuoteService {
       );
     }
 
-    const validity_date = new Date();
-    validity_date.setDate(validity_date.getDate() + valid_days);
+    const quoteDate = new Date();
+    const validUntil = new Date(quoteDate);
+    validUntil.setDate(validUntil.getDate() + valid_days);
 
     const quote = this.getQuoteRepository().create({
       id: generateId(),
       quote_number: generateQuoteNumber(),
       request_id,
       vendor_id,
-      quote_date: new Date(),
-      validity_date,
+      quote_date: quoteDate,
+      valid_until: validUntil,
       line_items,
       total_amount,
-      payment_terms: payment_terms || 'NET 30',
-      delivery_location: delivery_location || '',
       status: QuoteStatus.SENT,
     });
 
@@ -191,21 +188,14 @@ export class QuoteService {
   }
 
   /**
-   * Check if quote is expired
-   */
-  isQuoteExpired(quote: Quote): boolean {
-    return new Date() > quote.validity_date;
-  }
-
-  /**
-   * Get non-expired quotes for request
+   * Get all quotes for request
    */
   async getActiveQuotesForRequest(request_id: string): Promise<Quote[]> {
     const quotes = await this.getQuoteRepository().find({
       where: { request_id },
     });
 
-    return quotes.filter((q) => !this.isQuoteExpired(q));
+    return quotes;
   }
 }
 

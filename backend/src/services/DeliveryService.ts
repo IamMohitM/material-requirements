@@ -365,13 +365,8 @@ export class DeliveryService {
     }
 
     // Update PO status
-    if (deliveries.length === 0) {
-      po.delivery_status = 'PENDING';
-    } else if (allDelivered) {
-      po.delivery_status = 'FULLY_RECEIVED';
+    if (allDelivered) {
       po.status = POStatus.DELIVERED;
-    } else {
-      po.delivery_status = 'PARTIALLY_RECEIVED';
     }
 
     await this.getPoRepository().save(po);

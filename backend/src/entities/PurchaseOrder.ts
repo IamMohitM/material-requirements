@@ -14,7 +14,6 @@ import { POStatus, ApprovalStatus } from '../types/index';
 @Index(['vendor_id'])
 @Index(['status'])
 @Index(['approval_status'])
-@Index(['created_at'])
 export class PurchaseOrder {
   @PrimaryColumn('uuid')
   id: string;
@@ -31,8 +30,8 @@ export class PurchaseOrder {
   @Column({ type: 'uuid' })
   vendor_id: string;
 
-  @Column({ type: 'uuid' })
-  quote_id: string;
+  @Column({ type: 'uuid', nullable: true, default: null })
+  quote_id?: string | null;
 
   @Column({ type: 'date' })
   order_date: Date;
@@ -47,14 +46,17 @@ export class PurchaseOrder {
   })
   status: POStatus;
 
-  @Column({ type: 'numeric', precision: 15, scale: 2 })
-  total_amount: number;
+  @Column({ type: 'numeric', precision: 15, scale: 2, nullable: true })
+  total_amount?: number;
 
   @Column({ type: 'jsonb' })
   line_items: Array<{
     material_id: string;
+    material_name?: string;
     quantity: number;
+    unit: string;
     unit_price: number;
+    discount_percent?: number;
     gst_amount: number;
     total: number;
   }>;
@@ -66,31 +68,32 @@ export class PurchaseOrder {
   })
   approval_status: ApprovalStatus;
 
-  @Column({ type: 'boolean', default: false })
-  is_signed: boolean;
-
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  signature_url?: string;
+  @Column({ type: 'uuid', nullable: true })
+  first_approver_id?: string;
 
   @Column({ type: 'text', nullable: true })
-  special_instructions?: string;
+  first_approver_notes?: string;
 
-  @Column({ type: 'jsonb' })
-  delivery_address: Record<string, unknown>;
+  @Column({ type: 'timestamp', nullable: true })
+  first_approved_at?: Date;
 
-  @Column({ type: 'jsonb', nullable: true })
-  approval_chain?: Record<string, unknown>;
+  @Column({ type: 'uuid', nullable: true })
+  final_approver_id?: string;
 
-  @Column({
-    type: 'varchar',
-    length: 50,
-    default: 'PENDING',
-    nullable: true,
-  })
-  delivery_status?: string; // PENDING | PARTIALLY_RECEIVED | FULLY_RECEIVED
+  @Column({ type: 'text', nullable: true })
+  final_approver_notes?: string;
 
-  @Column({ type: 'uuid' })
-  created_by: string;
+  @Column({ type: 'timestamp', nullable: true })
+  final_approved_at?: Date;
+
+  @Column({ type: 'varchar', length: 50, default: 'PENDING', nullable: true })
+  delivery_status?: string;
+
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
+
+  @Column({ type: 'boolean', default: true, nullable: true })
+  is_active?: boolean;
 
   @CreateDateColumn()
   created_at: Date;

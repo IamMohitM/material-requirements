@@ -105,9 +105,6 @@ export const rejectRequestSchema = Joi.object({
 export const createQuoteSchema = Joi.object({
   request_id: Joi.string().uuid().required(),
   vendor_id: Joi.string().uuid().required(),
-  quote_number: Joi.string().max(100).required(),
-  quote_date: Joi.date().required(),
-  validity_date: Joi.date().min(Joi.ref('quote_date')).required(),
   total_amount: Joi.number().positive().required(),
   line_items: Joi.array()
     .items(
@@ -120,21 +117,14 @@ export const createQuoteSchema = Joi.object({
     )
     .min(1)
     .required(),
-  payment_terms: Joi.string().max(100).required(),
-  delivery_location: Joi.string().max(500).required(),
 });
 
 export const updateQuoteSchema = createQuoteSchema.fork(
   [
     'request_id',
     'vendor_id',
-    'quote_number',
-    'quote_date',
-    'validity_date',
     'total_amount',
     'line_items',
-    'payment_terms',
-    'delivery_location',
   ],
   (schema) => schema.optional()
 );
@@ -142,7 +132,8 @@ export const updateQuoteSchema = createQuoteSchema.fork(
 // Purchase Orders
 export const createPOSchema = Joi.object({
   request_id: Joi.string().uuid().required(),
-  quote_id: Joi.string().uuid().required(),
+  vendor_id: Joi.string().uuid().optional(),
+  quote_id: Joi.string().uuid().optional().allow(null),
   special_instructions: Joi.string().max(1000).optional(),
   delivery_address: Joi.object().optional(),
 });

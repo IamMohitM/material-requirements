@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { Container } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { InvoiceList } from '../components/invoices/InvoiceList';
-import { InvoiceForm } from '../components/invoices/InvoiceForm';
+import { InvoiceList, InvoiceForm, InvoiceDetail } from '../components/invoices';
 import { Invoice } from '../store/slices/invoicesSlice';
 
 export const InvoicesPage: React.FC = () => {
-  const navigate = useNavigate();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleCreateClick = () => {
     setShowCreateForm(true);
@@ -19,16 +18,38 @@ export const InvoicesPage: React.FC = () => {
 
   const handleFormSuccess = () => {
     setShowCreateForm(false);
-    // Optionally refresh the list here
+    setRefreshKey((prev) => prev + 1);
   };
 
   const handleRowClick = (invoice: Invoice) => {
-    navigate(`/invoices/${invoice.id}`);
+    setSelectedInvoice(invoice);
   };
+
+  const handleDetailClose = () => {
+    setSelectedInvoice(null);
+  };
+
+  const handleDetailUpdate = () => {
+    setSelectedInvoice(null);
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  if (selectedInvoice) {
+    return (
+      <Container className="py-4">
+        <InvoiceDetail
+          invoiceId={selectedInvoice.id}
+          onClose={handleDetailClose}
+          onUpdate={handleDetailUpdate}
+        />
+      </Container>
+    );
+  }
 
   return (
     <Container fluid className="py-5">
       <InvoiceList
+        key={refreshKey}
         onCreateClick={handleCreateClick}
         onRowClick={handleRowClick}
       />

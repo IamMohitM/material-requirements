@@ -8,6 +8,8 @@ import requestsReducer from './slices/requestsSlice';
 import vendorsReducer from './slices/vendorsSlice';
 import projectsReducer from './slices/projectsSlice';
 import materialsReducer from './slices/materialsSlice';
+import posReducer from './slices/posSlice';
+import quotesReducer from './slices/quotesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +22,8 @@ export const store = configureStore({
     vendors: vendorsReducer,
     projects: projectsReducer,
     materials: materialsReducer,
+    pos: posReducer,
+    quotes: quotesReducer,
   },
 });
 

@@ -166,9 +166,32 @@ export class RequestService {
       projects.forEach((project) => projectNameById.set(project.id, project.name));
     }
 
+    // Enrich materials with their names
+    const allMaterialIds = Array.from(
+      new Set(
+        items
+          .flatMap((item) => item.materials || [])
+          .map((m) => m.material_id)
+          .filter((id) => !!id)
+      )
+    );
+    const materialNameById = new Map<string, string>();
+
+    if (allMaterialIds.length > 0) {
+      const materials = await this.getMaterialRepository().find({
+        select: ['id', 'name'],
+        where: { id: In(allMaterialIds) },
+      });
+      materials.forEach((material) => materialNameById.set(material.id, material.name));
+    }
+
     const enrichedItems = items.map((item) => ({
       ...item,
       project_name: projectNameById.get(item.project_id) || null,
+      materials: (item.materials || []).map((m) => ({
+        ...m,
+        material_name: materialNameById.get(m.material_id) || null,
+      })),
     }));
 
     return {

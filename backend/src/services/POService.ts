@@ -33,11 +33,11 @@ export class POService {
     project_id: string,
     request_id: string,
     vendor_id: string,
-    quote_id: string,
     line_items: any[],
     total_amount: number,
     required_delivery_date: Date,
     created_by: string,
+    quote_id?: string | null,
     delivery_address?: any,
     special_instructions?: string
   ): Promise<PurchaseOrder> {
@@ -60,23 +60,10 @@ export class POService {
       line_items,
       total_amount,
       approval_status: ApprovalStatus.PENDING,
-      delivery_address: delivery_address || {},
-      special_instructions,
-      created_by,
+      notes: special_instructions,
     });
 
     await this.getPoRepository().save(po);
-
-    // Create brand tracking records
-    for (const lineItem of line_items) {
-      await this.getPoLineBrandRepository().save({
-        id: generateId(),
-        po_id: po.id,
-        material_id: lineItem.material_id,
-        brand_id: lineItem.brand_id || null,
-      });
-    }
-
     return po;
   }
 
@@ -177,12 +164,8 @@ export class POService {
       );
     }
 
-    if (updates.delivery_address) {
-      po.delivery_address = updates.delivery_address;
-    }
-
     if (updates.special_instructions) {
-      po.special_instructions = updates.special_instructions;
+      po.notes = updates.special_instructions;
     }
 
     if (updates.required_delivery_date) {
@@ -228,18 +211,9 @@ export class POService {
     }
 
     po.approval_status = ApprovalStatus.APPROVED;
-
-    // Add to approval chain
-    const chain = ((po.approval_chain as unknown) as any[]) || [];
-    chain.push({
-      approver_id,
-      approval_limit,
-      action: 'approved',
-      timestamp: new Date(),
-      comments,
-    });
-
-    po.approval_chain = chain as any;
+    po.first_approver_id = approver_id;
+    po.first_approver_notes = comments;
+    po.first_approved_at = new Date();
 
     await this.getPoRepository().save(po);
     return po;
@@ -256,16 +230,9 @@ export class POService {
     const po = await this.getPOById(id);
 
     po.approval_status = ApprovalStatus.REJECTED;
-
-    const chain = ((po.approval_chain as unknown) as any[]) || [];
-    chain.push({
-      rejector_id,
-      action: 'rejected',
-      timestamp: new Date(),
-      reason,
-    });
-
-    po.approval_chain = chain as any;
+    po.first_approver_id = rejector_id;
+    po.first_approver_notes = reason;
+    po.first_approved_at = new Date();
 
     await this.getPoRepository().save(po);
     return po;

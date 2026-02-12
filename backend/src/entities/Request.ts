@@ -34,6 +34,7 @@ export class Request {
   @Column({ type: 'jsonb', default: '[]' })
   materials: Array<{
     material_id: string;
+    material_name?: string | null;
     quantity: number;
     unit: string;
   }>;
